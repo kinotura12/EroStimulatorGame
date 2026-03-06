@@ -34,8 +34,16 @@ MonoBehaviour:
   DriveBiasShiftAbove: 0.02
   DriveBiasDecayWithin: 0
   DriveBiasDecayStop: 0.005
-  OrgasmThreshold: 1
-  OrgasmThresholdMultiplier: 1
+  OrgasmThreshold: 0.85
+  OrgasmThresholdMultiplier: 0.8
+  WithholdDuration: 3
+  EdgeDecayRate: 0.3
+  EdgeNeutralIntensity: 0.15
+  EdgeFillRate: 1.6
+  EdgeFillCurve: 0.5
+  EdgeDrainRate: 0.2
+  EdgeDwellScaleMax: 8
+  EdgePeakHoldDuration: 1.5
   TransitionAboveDuration: 5
   TransitionBelowDuration: 5
   TransitionWithinDuration: 8
@@ -51,6 +59,9 @@ MonoBehaviour:
   FrustrationDriveThreshold: 0.5
   OrgasmFatigueGain: 0.15
   OrgasmArousalResetTo: 0.25
+  OrgasmCumulativeGain: 0.5
+  OrgasmCumulativeDecayRate: 0.01
+  OrgasmCumulativeBonusScale: 0.5
   EndAOrgasmCount: 2
   EndBOrgasmCount: 2
   EndCOrgasmCount: 3

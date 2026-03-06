@@ -20,6 +20,7 @@
     --red: #f87171;
     --blue: #60a5fa;
     --orange: #fb923c;
+    --panel-w: 520px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,9 +39,15 @@
     padding: 24px 32px 16px;
     border-bottom: 1px solid var(--border);
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    justify-content: space-between;
     gap: 16px;
     background: var(--surface);
+  }
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
   }
   header h1 {
     font-size: 17px;
@@ -52,6 +59,30 @@
     font-size: 13px;
     color: var(--muted);
     letter-spacing: 0.05em;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .head-btn {
+    border: 1px solid var(--border);
+    background: #1a1a27;
+    color: var(--text);
+    border-radius: 8px;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+  .head-btn:hover {
+    border-color: var(--accent);
+    background: #202033;
+  }
+  .head-btn.warn {
+    border-color: rgba(248,113,113,0.45);
+    color: #fecaca;
   }
 
   /* メインレイアウト */
@@ -186,12 +217,24 @@
 
   /* サイドパネル */
   .side-panel {
-    width: 320px;
+    width: var(--panel-w);
+    min-width: 360px;
+    max-width: 780px;
     border-left: 1px solid var(--border);
     background: var(--surface);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  .splitter {
+    width: 8px;
+    cursor: col-resize;
+    background: linear-gradient(to right, transparent, rgba(122,120,144,0.22), transparent);
+    border-left: 1px solid rgba(42,42,58,0.6);
+    border-right: 1px solid rgba(42,42,58,0.6);
+  }
+  .splitter:hover {
+    background: linear-gradient(to right, transparent, rgba(192,132,252,0.4), transparent);
   }
 
   .panel-header {
@@ -257,6 +300,80 @@
     background: rgba(192, 132, 252, 0.07);
     border-color: rgba(192, 132, 252, 0.4);
   }
+  .rule-editor {
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .rule-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .rule-row:last-child { margin-bottom: 0; }
+  .rule-row label {
+    color: var(--muted);
+    min-width: 56px;
+  }
+  .rule-input, .rule-select {
+    border: 1px solid var(--border);
+    background: #111421;
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 11px;
+    padding: 4px 6px;
+    min-height: 26px;
+    width: 100%;
+  }
+  .rule-select { width: auto; min-width: 94px; }
+  .rule-mini-btn {
+    border: 1px solid var(--border);
+    background: #1a1f31;
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 11px;
+    height: 24px;
+    padding: 0 8px;
+    cursor: pointer;
+  }
+  .rule-mini-btn:hover { border-color: var(--accent); }
+  .rule-mini-btn.warn {
+    border-color: rgba(248,113,113,0.45);
+    color: #fecaca;
+  }
+  .cond-box {
+    border: 1px solid rgba(122,120,144,0.35);
+    border-radius: 6px;
+    padding: 6px;
+    margin-top: 6px;
+    background: rgba(0,0,0,0.15);
+  }
+  .nl-rule {
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .nl-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .nl-line:last-child { margin-bottom: 0; }
+  .nl-token {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
 
   .transition-to {
     font-weight: 500;
@@ -302,6 +419,48 @@
     font-weight: 500;
   }
   .threshold-table td:first-child { color: var(--text); font-weight: 400; }
+  .tol-panel {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+  }
+  .tol-track {
+    position: relative;
+    height: 20px;
+    border-radius: 4px;
+    background: #1c1e2a;
+    border: 1px solid rgba(122,120,144,0.35);
+    overflow: hidden;
+  }
+  .tol-below  { position:absolute; top:0; left:0; height:100%; background:rgba(96,165,250,.35); }
+  .tol-within { position:absolute; top:0; height:100%; background:rgba(52,211,153,.45); }
+  .tol-above  { position:absolute; top:0; height:100%; background:rgba(248,113,113,.35); }
+  .tol-tick {
+    position:absolute;
+    top:-14px;
+    transform:translateX(-50%);
+    font-size:9px;
+    color:var(--muted);
+    font-family:'Mono Lisa', monospace;
+    white-space:nowrap;
+  }
+  .tol-inputs { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .tol-slider-row {
+    display:grid;
+    grid-template-columns: 56px 1fr 52px;
+    align-items:center;
+    gap:10px;
+  }
+  .tol-slider-label { font-size: 11px; color: var(--muted); }
+  .tol-slider-val { font-size: 11px; color: var(--muted); text-align: right; font-family:'Mono Lisa', monospace; }
+  .tol-actions {
+    margin-top: 10px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
 
   /* ズームコントロール */
   .zoom-controls {
@@ -338,8 +497,17 @@
 <body>
 
 <header>
-  <h1>反応シミュレーション — ステートマシン図</h1>
-  <span>★変更希望 反映済み</span>
+  <div class="header-left">
+    <h1>反応シミュレーション — ステートマシン図</h1>
+    <span id="bridge-status">StateTransitionConfig未同期（ローカル表示）</span>
+  </div>
+  <div class="header-actions">
+    <button class="head-btn" id="btn-load-bridge">Unity Bridge JSON読込</button>
+    <button class="head-btn" id="btn-export-bridge">Unity Bridge JSON書出</button>
+    <button class="head-btn warn" id="btn-reset-static">表示初期値に戻す</button>
+    <input type="file" id="bridge-file-input" accept=".json,application/json" style="display:none;">
+    <input type="file" id="tol-bridge-file-input" accept=".json,application/json" style="display:none;">
+  </div>
 </header>
 
 <div class="layout">
@@ -364,6 +532,8 @@
     </div>
     <div class="hint">ドラッグでパン　ノードをクリックで詳細</div>
   </div>
+
+  <div class="splitter" id="panel-splitter" title="ドラッグで右パネル幅を調整"></div>
 
   <div class="side-panel">
     <div class="panel-header">State Detail</div>
@@ -462,6 +632,270 @@ const STATES = {
 };
 
 const NODE_W = 180, NODE_H = 72, END_W = 140, END_H = 58;
+const DEFAULT_TRANSITIONS_BY_STATE = {};
+Object.keys(STATES).forEach(id => {
+  DEFAULT_TRANSITIONS_BY_STATE[id] = (STATES[id].transitions || []).map(tr => ({
+    to: tr.to,
+    label: tr.label,
+    cond: tr.cond,
+    tags: (tr.tags || []).map(t => [t[0], t[1]])
+  }));
+});
+
+const STATE_IDS = Object.keys(STATES);
+const EDITABLE_STATE_IDS = STATE_IDS.filter(id => !STATES[id].isEnd);
+const STATE_ID_TO_ENUM = { End_CW: "End_C_White", End_CO: "End_C_Overload" };
+const ENUM_TO_STATE_ID = { End_C_White: "End_CW", End_C_Overload: "End_CO" };
+const PARAM_LABEL = {
+  Arousal: "Arousal",
+  Resistance: "Resistance",
+  Fatigue: "Fatigue",
+  Drive: "Drive",
+  OrgasmCount: "射精回数",
+  DriveBias: "DriveBias",
+  BrokenDownMode: "崩壊モード"
+};
+const OP_LABEL = {
+  GreaterEqual: "≥",
+  LessEqual: "≤",
+  GreaterThan: ">",
+  LessThan: "<"
+};
+const OP_LABEL_JA = {
+  GreaterEqual: "以上",
+  LessEqual: "以下",
+  GreaterThan: "超える",
+  LessThan: "未満"
+};
+const BAND_LABEL = {
+  Any: "Any",
+  Stop: "Stop",
+  Below: "Below",
+  Within: "Within",
+  Above: "Above"
+};
+const BAND_LABEL_JA = {
+  Any: "問わない",
+  Stop: "停止中(Stop)",
+  Below: "Below帯",
+  Within: "Within帯",
+  Above: "Above帯"
+};
+
+let bridgeRules = [];
+let bridgeMode = false;
+const BRIDGE_DRAFT_KEY = "state_machine_bridge_draft_v1";
+const TOL_DRAFT_KEY = "state_machine_tol_draft_v1";
+
+function stateIdFromAny(raw) {
+  if (!raw) return "";
+  return ENUM_TO_STATE_ID[raw] || raw;
+}
+
+function enumStateFromId(raw) {
+  if (!raw) return "";
+  return STATE_ID_TO_ENUM[raw] || raw;
+}
+
+function normalizeRule(rule) {
+  const conditions = Array.isArray(rule.conditions) ? rule.conditions : [];
+  return {
+    enabled: rule.enabled !== false,
+    note: rule.note || "",
+    fromState: stateIdFromAny(rule.fromState || "Guarded"),
+    toState: stateIdFromAny(rule.toState || "Defensive"),
+    requiredBand: BAND_LABEL[rule.requiredBand] ? rule.requiredBand : "Any",
+    bandDuration: Number.isFinite(Number(rule.bandDuration)) ? Math.max(0, Number(rule.bandDuration)) : 0,
+    conditions: conditions.map(c => {
+      const param = PARAM_LABEL[c.param] ? c.param : "Arousal";
+      return {
+        param,
+        op: OP_LABEL[c.op] ? c.op : "GreaterEqual",
+        threshold: sanitizeThreshold(param, c.threshold)
+      };
+    })
+  };
+}
+
+function getThresholdConfig(param) {
+  switch (param) {
+    case "OrgasmCount":
+      return { min: 1, max: 99, step: 1, def: 1, integer: true };
+    case "DriveBias":
+      return { min: -1, max: 1, step: 0.01, def: 0, integer: false };
+    case "BrokenDownMode":
+      return { min: 0, max: 2, step: 1, def: 0, integer: true };
+    case "Arousal":
+    case "Resistance":
+    case "Fatigue":
+    case "Drive":
+      return { min: 0, max: 1, step: 0.01, def: 0.5, integer: false };
+    default:
+      return { min: -9999, max: 9999, step: 0.01, def: 0.5, integer: false };
+  }
+}
+
+function decimalsFromStep(step) {
+  const s = String(step);
+  const i = s.indexOf(".");
+  return i < 0 ? 0 : (s.length - i - 1);
+}
+
+function sanitizeThreshold(param, rawValue) {
+  const cfg = getThresholdConfig(param);
+  let v = Number(rawValue);
+  if (!Number.isFinite(v)) v = cfg.def;
+  v = Math.max(cfg.min, Math.min(cfg.max, v));
+  if (cfg.integer) {
+    v = Math.round(v);
+  } else {
+    const d = decimalsFromStep(cfg.step);
+    v = Number(v.toFixed(Math.max(0, d)));
+  }
+  return v;
+}
+
+function thresholdInputValue(param, rawValue) {
+  const v = sanitizeThreshold(param, rawValue);
+  return String(v);
+}
+
+function formatThreshold(cond) {
+  if (cond.param === "OrgasmCount") return `${Math.round(cond.threshold)}回`;
+  if (cond.param === "BrokenDownMode") {
+    const v = Math.round(cond.threshold);
+    if (v === 1) return "アヘ顔";
+    if (v === 2) return "トロトロ";
+    return "None";
+  }
+  if (Math.abs(cond.threshold) >= 10 || Number.isInteger(cond.threshold)) return `${cond.threshold}`;
+  return `${Number(cond.threshold).toFixed(2)}`;
+}
+
+function formatRuleCond(rule) {
+  const parts = [];
+  if (rule.requiredBand !== "Any") {
+    const b = rule.requiredBand;
+    if (rule.bandDuration > 0) {
+      const sec = Number.isInteger(rule.bandDuration) ? rule.bandDuration : rule.bandDuration.toFixed(1);
+      parts.push(`${b}継続 ${sec}s`);
+    } else {
+      parts.push(`${b}条件`);
+    }
+  }
+  if (rule.conditions.length > 0) {
+    rule.conditions.forEach(c => {
+      parts.push(`${PARAM_LABEL[c.param] || c.param} ${OP_LABEL_JA[c.op] || c.op} ${formatThreshold(c)}`);
+    });
+  }
+  return parts.length > 0 ? parts.join(" + ") : "常時";
+}
+
+function tagsFromRule(rule) {
+  const tags = [];
+  if (rule.requiredBand !== "Any") tags.push(["band", rule.requiredBand]);
+  if (rule.bandDuration > 0) tags.push(["time", `${rule.bandDuration}s`]);
+  rule.conditions.forEach(c => {
+    if (c.param === "OrgasmCount") tags.push(["end", "射精"]);
+    else tags.push(["param", PARAM_LABEL[c.param] || c.param]);
+  });
+  return tags;
+}
+
+function rebuildStatesFromBridgeRules() {
+  STATE_IDS.forEach(id => {
+    STATES[id].transitions = [];
+  });
+  bridgeRules.forEach(rule => {
+    const from = rule.fromState;
+    if (!STATES[from]) return;
+    STATES[from].transitions.push({
+      to: rule.toState,
+      label: `→ ${rule.toState}`,
+      cond: formatRuleCond(rule),
+      tags: tagsFromRule(rule),
+      _rule: rule
+    });
+  });
+  rebuildArrowsFromStates();
+}
+
+function resetToStaticTransitions() {
+  bridgeMode = false;
+  bridgeRules = [];
+  try { localStorage.removeItem(BRIDGE_DRAFT_KEY); } catch (_) {}
+  STATE_IDS.forEach(id => {
+    STATES[id].transitions = (DEFAULT_TRANSITIONS_BY_STATE[id] || []).map(tr => ({
+      to: tr.to,
+      label: tr.label,
+      cond: tr.cond,
+      tags: (tr.tags || []).map(t => [t[0], t[1]])
+    }));
+  });
+  rebuildArrowsFromStates();
+  updateBridgeStatus("StateTransitionConfig未同期（ローカル表示）");
+}
+
+function persistTolDraft() {
+  const root = buildTolBridgeRoot();
+  try { localStorage.setItem(TOL_DRAFT_KEY, JSON.stringify(root)); } catch (_) {}
+}
+
+function tryRestoreTolDraft() {
+  let raw = "";
+  try { raw = localStorage.getItem(TOL_DRAFT_KEY) || ""; } catch (_) {}
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    return applyTolBridgeRoot(parsed) > 0;
+  } catch (_) {
+    return false;
+  }
+}
+
+function persistBridgeDraft() {
+  if (!bridgeMode) return;
+  const root = {
+    version: "state-machine-bridge-v1",
+    rules: bridgeRules.map(r => ({
+      enabled: r.enabled,
+      note: r.note || "",
+      fromState: r.fromState,
+      toState: r.toState,
+      requiredBand: r.requiredBand,
+      bandDuration: r.bandDuration,
+      conditions: (r.conditions || []).map(c => ({
+        param: c.param,
+        op: c.op,
+        threshold: c.threshold
+      }))
+    }))
+  };
+  try { localStorage.setItem(BRIDGE_DRAFT_KEY, JSON.stringify(root)); } catch (_) {}
+}
+
+function tryRestoreBridgeDraft() {
+  let raw = "";
+  try { raw = localStorage.getItem(BRIDGE_DRAFT_KEY) || ""; } catch (_) {}
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    const rules = Array.isArray(parsed.rules) ? parsed.rules : null;
+    if (!rules) return false;
+    bridgeRules = rules.map(r => normalizeRule(r)).filter(r => STATES[r.fromState] && STATES[r.toState]);
+    bridgeMode = true;
+    rebuildStatesFromBridgeRules();
+    updateBridgeStatus(`StateTransitionConfig同期中（復元: ${bridgeRules.length} rules）`);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function updateBridgeStatus(text) {
+  const el = document.getElementById("bridge-status");
+  if (el) el.textContent = text;
+}
 
 // ─── ノード生成 ───────────────────────────────────────────────
 const inner = document.getElementById('canvas-inner');
@@ -505,46 +939,52 @@ function getEdgePoint(fromId, toId) {
   return { x: f.x + Math.cos(ang)*tx, y: f.y + Math.sin(ang)*tx };
 }
 
-const arrowData = [];
+let arrowData = [];
 let arrowIdxMap = {};
-const seenEdge = new Set();
 
-Object.values(STATES).forEach(s => {
-  s.transitions.forEach((tr, ti) => {
-    const from = s.id, to = tr.to;
-    const dedupeKey = `${from}__${to}__${tr.cond}`;
-    if (seenEdge.has(dedupeKey)) return;
-    seenEdge.add(dedupeKey);
+function rebuildArrowsFromStates() {
+  arrowData = [];
+  arrowIdxMap = {};
+  const seenEdge = new Set();
 
-    const key = `${from}-${to}-${ti}`;
-    arrowData.push({ from, to, tr, key });
-    if (!arrowIdxMap[from]) arrowIdxMap[from] = [];
-    arrowIdxMap[from].push(key);
+  Object.values(STATES).forEach(s => {
+    s.transitions.forEach((tr, ti) => {
+      const from = s.id, to = tr.to;
+      if (!STATES[to]) return;
+      const dedupeKey = `${from}__${to}__${tr.cond}__${ti}`;
+      if (seenEdge.has(dedupeKey)) return;
+      seenEdge.add(dedupeKey);
+
+      const key = `${from}-${to}-${ti}`;
+      arrowData.push({ from, to, tr, key });
+      if (!arrowIdxMap[from]) arrowIdxMap[from] = [];
+      arrowIdxMap[from].push(key);
+    });
   });
-});
 
-// カーブ制御用オフセット（同じfrom→to間の複数矢印をずらす）
-const pairCount = {};
-const undirMap = {};
-arrowData.forEach(a => {
-  const pk = `${a.from}_${a.to}`;
-  const uk = [a.from, a.to].sort().join('_');
-  pairCount[pk] = (pairCount[pk] || 0) + 1;
-  if (!undirMap[uk]) undirMap[uk] = { fwd: false, rev: false };
-  const first = a.from < a.to ? 'fwd' : 'rev';
-  undirMap[uk][first] = true;
-});
-const pairIdx = {};
-arrowData.forEach(a => {
-  const pk = `${a.from}_${a.to}`;
-  const uk = [a.from, a.to].sort().join('_');
-  pairIdx[pk] = (pairIdx[pk] || 0);
-  a.pairN = pairCount[pk];
-  a.pairI = pairIdx[pk]++;
-  const info = undirMap[uk];
-  a.hasReverse = info.fwd && info.rev;
-  a.dirSign = a.from < a.to ? -1 : 1;
-});
+  const pairCount = {};
+  const undirMap = {};
+  arrowData.forEach(a => {
+    const pk = `${a.from}_${a.to}`;
+    const uk = [a.from, a.to].sort().join("_");
+    pairCount[pk] = (pairCount[pk] || 0) + 1;
+    if (!undirMap[uk]) undirMap[uk] = { fwd: false, rev: false };
+    const first = a.from < a.to ? "fwd" : "rev";
+    undirMap[uk][first] = true;
+  });
+
+  const pairIdx = {};
+  arrowData.forEach(a => {
+    const pk = `${a.from}_${a.to}`;
+    const uk = [a.from, a.to].sort().join("_");
+    pairIdx[pk] = (pairIdx[pk] || 0);
+    a.pairN = pairCount[pk];
+    a.pairI = pairIdx[pk]++;
+    const info = undirMap[uk];
+    a.hasReverse = info.fwd && info.rev;
+    a.dirSign = a.from < a.to ? -1 : 1;
+  });
+}
 
 function drawArrows(highlightKeys = []) {
   // clear（defsは保持する）
@@ -716,22 +1156,26 @@ function renderPanel(id) {
     `<span class="tag tag-${type}">${label}</span>`
   ).join('');
 
-  const transHTML = s.transitions.map(tr => {
-    const toS = STATES[tr.to];
-    return `<div class="transition-item">
-      <div class="transition-to">${toS ? toS.num + ' ' + toS.name : tr.to}</div>
-      <div class="transition-cond">${tr.cond}</div>
-      <div style="margin-top:4px">${tagHTML(tr.tags)}</div>
-    </div>`;
-  }).join('') || '<div style="color:var(--muted);font-size:11px">遷移なし（終端状態）</div>';
+  const transHTML = bridgeMode
+    ? renderBridgeRuleEditors(id)
+    : (s.transitions.map((tr) => {
+      const toS = STATES[tr.to];
+      return `<div class="transition-item">
+        <div class="transition-to">${toS ? toS.num + ' ' + toS.name : tr.to}</div>
+        <div class="transition-cond">${tr.cond}</div>
+        <div style="margin-top:4px">${tagHTML(tr.tags)}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:11px">遷移なし（終端状態）</div>');
 
   const threshHTML = !s.isEnd ? `
     <div class="section-label">Threshold</div>
     <table class="threshold-table">
       <tr><th>TolLow</th><th>TolHigh</th></tr>
-      <tr><td>TolLow</td><td>${s.tolLow}</td></tr>
-      <tr><td>TolHigh</td><td>${s.tolHigh}</td></tr>
-    </table>` : '';
+      <tr><td>TolLow</td><td>${Number(s.tolLow).toFixed(2)}</td></tr>
+      <tr><td>TolHigh</td><td>${Number(s.tolHigh).toFixed(2)}</td></tr>
+    </table>
+    ${renderTolEditor(id)}
+    ` : '';
 
   // 自分への遷移（入ってくる矢印）
   const incoming = arrowData.filter(a => a.to === id);
@@ -746,9 +1190,463 @@ function renderPanel(id) {
     ${threshHTML}
     <div class="section-label">Outgoing Transitions（出ていく遷移）</div>
     ${transHTML}
+    ${bridgeMode && !s.isEnd ? `<div style="margin-top:8px;"><button class="head-btn" style="height:28px;" onclick="addRuleFromState('${id}')">＋ ルール追加</button></div>` : ''}
     <div class="section-label">Incoming（この状態に入ってくる経路）</div>
     ${inHTML}
   `;
+}
+
+function findBridgeRuleByStateIndex(stateId, idx) {
+  const trs = STATES[stateId].transitions || [];
+  if (!trs[idx] || !trs[idx]._rule) return null;
+  return trs[idx]._rule;
+}
+
+function clampTolPair(lowRaw, highRaw) {
+  let low = Number(lowRaw);
+  let high = Number(highRaw);
+  if (!Number.isFinite(low)) low = 0.3;
+  if (!Number.isFinite(high)) high = 0.7;
+  low = Math.max(0, Math.min(1, low));
+  high = Math.max(0, Math.min(1, high));
+  if (high < low + 0.01) {
+    if (low <= 0.99) high = Math.min(1, low + 0.01);
+    else {
+      high = 1;
+      low = Math.max(0, high - 0.01);
+    }
+  }
+  low = Number(low.toFixed(2));
+  high = Number(high.toFixed(2));
+  return { low, high };
+}
+
+function renderTolEditor(stateId) {
+  const s = STATES[stateId];
+  if (!s || s.isEnd) return "";
+  const p = clampTolPair(s.tolLow, s.tolHigh);
+  s.tolLow = p.low;
+  s.tolHigh = p.high;
+  const lowPct = p.low * 100;
+  const withinPct = (p.high - p.low) * 100;
+  const highPct = (1 - p.high) * 100;
+  return `
+    <div class="tol-panel">
+      <div class="tol-track">
+        <div class="tol-below" style="width:${lowPct}%"></div>
+        <div class="tol-within" style="left:${lowPct}%;width:${withinPct}%"></div>
+        <div class="tol-above" style="left:${p.high * 100}%;width:${highPct}%"></div>
+        <div class="tol-tick" style="left:${lowPct}%">${p.low.toFixed(2)}</div>
+        <div class="tol-tick" style="left:${p.high * 100}%">${p.high.toFixed(2)}</div>
+      </div>
+      <div class="tol-inputs">
+        <div class="tol-slider-row">
+          <div class="tol-slider-label">TolLow</div>
+          <input type="range" min="0" max="1" step="0.01" value="${p.low}" oninput="setTolLow('${stateId}', this.value)">
+          <div class="tol-slider-val">${p.low.toFixed(2)}</div>
+        </div>
+        <div class="tol-slider-row">
+          <div class="tol-slider-label">TolHigh</div>
+          <input type="range" min="0" max="1" step="0.01" value="${p.high}" oninput="setTolHigh('${stateId}', this.value)">
+          <div class="tol-slider-val">${p.high.toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="tol-actions">
+        <button class="rule-mini-btn" onclick="openTolBridgeFile()">Tol: Unity/Dashboard JSON読込</button>
+        <button class="rule-mini-btn" onclick="exportTolBridgeJson()">Tol: Unity連携JSON書出</button>
+      </div>
+    </div>
+  `;
+}
+
+function setTolLow(stateId, value) {
+  const s = STATES[stateId];
+  if (!s || s.isEnd) return;
+  const p = clampTolPair(value, s.tolHigh);
+  s.tolLow = p.low;
+  s.tolHigh = p.high;
+  persistTolDraft();
+  if (selectedId === stateId) renderPanel(stateId);
+}
+
+function setTolHigh(stateId, value) {
+  const s = STATES[stateId];
+  if (!s || s.isEnd) return;
+  const p = clampTolPair(s.tolLow, value);
+  s.tolLow = p.low;
+  s.tolHigh = p.high;
+  persistTolDraft();
+  if (selectedId === stateId) renderPanel(stateId);
+}
+
+function buildTolBridgeRoot() {
+  return {
+    version: "state-machine-tol-bridge-v1",
+    states: EDITABLE_STATE_IDS.map(id => ({
+      id,
+      tolLow: clampTolPair(STATES[id].tolLow, STATES[id].tolHigh).low,
+      tolHigh: clampTolPair(STATES[id].tolLow, STATES[id].tolHigh).high
+    }))
+  };
+}
+
+function exportTolBridgeJson() {
+  const root = buildTolBridgeRoot();
+  const blob = new Blob([JSON.stringify(root, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "state_machine_tol_bridge.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function applyTolBridgeRoot(parsed) {
+  const list = Array.isArray(parsed?.states) ? parsed.states : [];
+  if (list.length === 0) return 0;
+  let count = 0;
+  list.forEach(st => {
+    const id = stateIdFromAny(st?.id || "");
+    if (!STATES[id] || STATES[id].isEnd) return;
+    const p = clampTolPair(st.tolLow, st.tolHigh);
+    STATES[id].tolLow = p.low;
+    STATES[id].tolHigh = p.high;
+    count += 1;
+  });
+  if (count > 0) persistTolDraft();
+  return count;
+}
+
+function openTolBridgeFile() {
+  document.getElementById("tol-bridge-file-input").click();
+}
+
+function escHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildStateOptions(selected) {
+  return STATE_IDS.map(id => `<option value="${id}" ${id === selected ? "selected" : ""}>${id}</option>`).join("");
+}
+
+function buildBandOptions(selected) {
+  return Object.keys(BAND_LABEL).map(k => `<option value="${k}" ${k === selected ? "selected" : ""}>${BAND_LABEL_JA[k] || k}</option>`).join("");
+}
+
+function buildParamOptions(selected) {
+  return Object.keys(PARAM_LABEL).map(k => `<option value="${k}" ${k === selected ? "selected" : ""}>${PARAM_LABEL[k]}</option>`).join("");
+}
+
+function buildOpOptions(selected) {
+  return Object.keys(OP_LABEL).map(k => `<option value="${k}" ${k === selected ? "selected" : ""}>${OP_LABEL_JA[k]}</option>`).join("");
+}
+
+function renderBridgeRuleEditors(stateId) {
+  if (!bridgeMode) return "";
+  const trs = STATES[stateId].transitions || [];
+  if (trs.length === 0) return '<div style="color:var(--muted);font-size:11px">遷移なし</div>';
+  return trs.map((tr, idx) => {
+    const rule = tr._rule;
+    if (!rule) return "";
+    const conds = (rule.conditions || []).map((c, cidx) => `
+      <div class="cond-box">
+        <div class="nl-line">
+          <span class="nl-token">条件${cidx + 1}</span>
+          <select class="rule-select" onchange="setConditionParam('${stateId}', ${idx}, ${cidx}, this.value)">
+            ${buildParamOptions(c.param)}
+          </select>
+          <span class="nl-token">が</span>
+          <select class="rule-select" onchange="setConditionOp('${stateId}', ${idx}, ${cidx}, this.value)">
+            ${buildOpOptions(c.op)}
+          </select>
+          <input
+            class="rule-input"
+            style="max-width:120px;"
+            type="number"
+            min="${getThresholdConfig(c.param).min}"
+            max="${getThresholdConfig(c.param).max}"
+            step="${getThresholdConfig(c.param).step}"
+            value="${thresholdInputValue(c.param, c.threshold)}"
+            onchange="setConditionThreshold('${stateId}', ${idx}, ${cidx}, this.value)"
+          >
+          <span class="nl-token">のとき</span>
+          <button class="rule-mini-btn warn" onclick="removeRuleCondition('${stateId}', ${idx}, ${cidx})">条件削除</button>
+        </div>
+      </div>
+    `).join("");
+
+    return `
+      <div class="nl-rule">
+        <div class="nl-line">
+          <span class="nl-token">ルール${idx + 1}</span>
+          <label style="min-width:auto;">
+            <input type="checkbox" ${rule.enabled ? "checked" : ""} onchange="setRuleEnabled('${stateId}', ${idx}, this.checked)"> 有効
+          </label>
+          <span class="nl-token"> / ${stateId} から</span>
+          <select class="rule-select" onchange="setRuleToState('${stateId}', ${idx}, this.value)">
+            ${buildStateOptions(rule.toState)}
+          </select>
+          <span class="nl-token">へ遷移</span>
+          <button class="rule-mini-btn" onclick="moveRuleWithinState('${stateId}', ${idx}, -1)">▲</button>
+          <button class="rule-mini-btn" onclick="moveRuleWithinState('${stateId}', ${idx}, 1)">▼</button>
+          <button class="rule-mini-btn warn" onclick="deleteRule('${stateId}', ${idx})">削除</button>
+        </div>
+        <div class="nl-line">
+          <span class="nl-token">Band</span>
+          <select class="rule-select" onchange="setRuleBand('${stateId}', ${idx}, this.value)">
+            ${buildBandOptions(rule.requiredBand)}
+          </select>
+          <span class="nl-token">が</span>
+          <input class="rule-input" style="max-width:110px;" type="number" min="0" step="0.1" value="${Number(rule.bandDuration)}" onchange="setRuleDuration('${stateId}', ${idx}, this.value)">
+          <span class="nl-token">秒以上</span>
+        </div>
+        <div class="nl-line">
+          <span class="nl-token">メモ</span>
+          <input class="rule-input" type="text" value="${escHtml(rule.note || "")}" onchange="setRuleNote('${stateId}', ${idx}, this.value)">
+        </div>
+        <div class="nl-line" style="display:block;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">もし次をすべて満たすなら（AND）</div>
+          ${conds || '<div style="font-size:11px;color:var(--muted);">条件なし</div>'}
+          <div style="margin-top:6px;">
+            <button class="rule-mini-btn" onclick="addRuleCondition('${stateId}', ${idx})">＋ 条件追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function refreshAfterRuleEdit() {
+  if (bridgeMode) rebuildStatesFromBridgeRules();
+  persistBridgeDraft();
+  drawArrows(selectedId ? ((arrowIdxMap[selectedId] || []).concat(arrowData.filter(a => a.to === selectedId).map(a => a.key))) : []);
+  if (selectedId) renderPanel(selectedId);
+}
+
+function addRuleFromState(fromState) {
+  if (!bridgeMode) return;
+  bridgeRules.push(normalizeRule({
+    enabled: true,
+    note: "",
+    fromState,
+    toState: "Defensive",
+    requiredBand: "Any",
+    bandDuration: 0,
+    conditions: []
+  }));
+  refreshAfterRuleEdit();
+}
+
+function moveRuleWithinState(stateId, idx, dir) {
+  if (!bridgeMode) return;
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  const gi = bridgeRules.indexOf(rule);
+  if (gi < 0) return;
+
+  let target = -1;
+  if (dir < 0) {
+    for (let i = gi - 1; i >= 0; i--) {
+      if (bridgeRules[i].fromState === rule.fromState) { target = i; break; }
+    }
+  } else {
+    for (let i = gi + 1; i < bridgeRules.length; i++) {
+      if (bridgeRules[i].fromState === rule.fromState) { target = i; break; }
+    }
+  }
+  if (target < 0) return;
+  const tmp = bridgeRules[target];
+  bridgeRules[target] = bridgeRules[gi];
+  bridgeRules[gi] = tmp;
+  refreshAfterRuleEdit();
+}
+
+function deleteRule(stateId, idx) {
+  if (!bridgeMode) return;
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  const i = bridgeRules.indexOf(rule);
+  if (i >= 0) bridgeRules.splice(i, 1);
+  refreshAfterRuleEdit();
+}
+
+function setRuleEnabled(stateId, idx, checked) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  rule.enabled = !!checked;
+  refreshAfterRuleEdit();
+}
+
+function setRuleToState(stateId, idx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !STATES[value]) return;
+  rule.toState = value;
+  refreshAfterRuleEdit();
+}
+
+function setRuleBand(stateId, idx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !BAND_LABEL[value]) return;
+  rule.requiredBand = value;
+  refreshAfterRuleEdit();
+}
+
+function setRuleDuration(stateId, idx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return;
+  rule.bandDuration = Math.max(0, n);
+  refreshAfterRuleEdit();
+}
+
+function setRuleNote(stateId, idx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  rule.note = String(value || "");
+  refreshAfterRuleEdit();
+}
+
+function addRuleCondition(stateId, idx) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+  if (!Array.isArray(rule.conditions)) rule.conditions = [];
+  rule.conditions.push({ param: "Arousal", op: "GreaterEqual", threshold: sanitizeThreshold("Arousal", 0.5) });
+  refreshAfterRuleEdit();
+}
+
+function removeRuleCondition(stateId, idx, cidx) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !Array.isArray(rule.conditions) || !rule.conditions[cidx]) return;
+  rule.conditions.splice(cidx, 1);
+  refreshAfterRuleEdit();
+}
+
+function setConditionParam(stateId, idx, cidx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !Array.isArray(rule.conditions) || !rule.conditions[cidx]) return;
+  const param = PARAM_LABEL[value] ? value : "Arousal";
+  rule.conditions[cidx].param = param;
+  rule.conditions[cidx].threshold = sanitizeThreshold(param, rule.conditions[cidx].threshold);
+  refreshAfterRuleEdit();
+}
+
+function setConditionOp(stateId, idx, cidx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !Array.isArray(rule.conditions) || !rule.conditions[cidx]) return;
+  rule.conditions[cidx].op = OP_LABEL[value] ? value : "GreaterEqual";
+  refreshAfterRuleEdit();
+}
+
+function setConditionThreshold(stateId, idx, cidx, value) {
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule || !Array.isArray(rule.conditions) || !rule.conditions[cidx]) return;
+  const param = rule.conditions[cidx].param || "Arousal";
+  rule.conditions[cidx].threshold = sanitizeThreshold(param, value);
+  refreshAfterRuleEdit();
+}
+
+function openRuleEditor(stateId, idx) {
+  if (!bridgeMode) return;
+  const rule = findBridgeRuleByStateIndex(stateId, idx);
+  if (!rule) return;
+
+  const enabledIn = window.prompt("enabled (true/false)", String(rule.enabled));
+  if (enabledIn === null) return;
+  rule.enabled = enabledIn.trim().toLowerCase() !== "false";
+
+  const toIn = window.prompt(`toState (${STATE_IDS.join(", ")})`, rule.toState);
+  if (toIn === null) return;
+  const toNorm = stateIdFromAny(toIn.trim());
+  if (STATES[toNorm]) rule.toState = toNorm;
+
+  const bandIn = window.prompt("requiredBand (Any/Stop/Below/Within/Above)", rule.requiredBand);
+  if (bandIn === null) return;
+  if (BAND_LABEL[bandIn.trim()]) rule.requiredBand = bandIn.trim();
+
+  const durIn = window.prompt("bandDuration (seconds)", String(rule.bandDuration));
+  if (durIn === null) return;
+  const durN = Number(durIn);
+  if (Number.isFinite(durN)) rule.bandDuration = Math.max(0, durN);
+
+  const noteIn = window.prompt("note", rule.note || "");
+  if (noteIn === null) return;
+  rule.note = noteIn;
+
+  const condJsonCurrent = JSON.stringify(rule.conditions, null, 2);
+  const condIn = window.prompt(
+    "conditions(JSON): [{\"param\":\"Arousal\",\"op\":\"GreaterEqual\",\"threshold\":0.5}]",
+    condJsonCurrent
+  );
+  if (condIn === null) return;
+  try {
+    const parsed = JSON.parse(condIn);
+    if (Array.isArray(parsed)) {
+      rule.conditions = parsed.map(c => ({
+        param: PARAM_LABEL[c.param] ? c.param : "Arousal",
+        op: OP_LABEL[c.op] ? c.op : "GreaterEqual",
+        threshold: Number.isFinite(Number(c.threshold)) ? Number(c.threshold) : 0.5
+      }));
+    }
+  } catch (e) {
+    alert("conditions JSON parse失敗のため、既存値を維持します。");
+  }
+
+  refreshAfterRuleEdit();
+}
+
+function exportBridgeJson() {
+  if (!bridgeMode) {
+    alert("Bridge JSON未読込です。先に Unity Bridge JSON を読み込んでください。");
+    return;
+  }
+  const root = {
+    version: "state-machine-bridge-v1",
+    rules: bridgeRules.map(r => ({
+      enabled: r.enabled,
+      note: r.note || "",
+      fromState: enumStateFromId(r.fromState),
+      toState: enumStateFromId(r.toState),
+      requiredBand: r.requiredBand,
+      bandDuration: r.bandDuration,
+      conditions: (r.conditions || []).map(c => ({
+        param: c.param,
+        op: c.op,
+        threshold: c.threshold
+      }))
+    }))
+  };
+  const blob = new Blob([JSON.stringify(root, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "state_machine_bridge.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadBridgeJsonText(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    alert("JSON解析に失敗しました。");
+    return;
+  }
+  const rules = Array.isArray(parsed.rules) ? parsed.rules : null;
+  if (!rules) {
+    alert("rules 配列が見つかりません。");
+    return;
+  }
+  bridgeRules = rules.map(r => normalizeRule(r)).filter(r => STATES[r.fromState] && STATES[r.toState]);
+  bridgeMode = true;
+  rebuildStatesFromBridgeRules();
+  persistBridgeDraft();
+  drawArrows();
+  if (selectedId) renderPanel(selectedId);
+  updateBridgeStatus(`StateTransitionConfig同期中（${bridgeRules.length} rules）`);
 }
 
 // ─── パン & ズーム ─────────────────────────────────────────
@@ -789,7 +1687,88 @@ document.getElementById('zoom-in').onclick = () => { scale = Math.min(2.0, scale
 document.getElementById('zoom-out').onclick = () => { scale = Math.max(0.2, scale * 0.87); applyTransform(); };
 document.getElementById('zoom-reset').onclick = () => { scale = 0.55; tx = 40; ty = 20; applyTransform(); };
 
+// ─── Side Panel Resize ─────────────────────────────────────
+const panelSplitter = document.getElementById("panel-splitter");
+let resizingPanel = false;
+let startXPanel = 0;
+let startPanelW = 0;
+
+function setPanelWidth(px) {
+  const w = Math.max(360, Math.min(780, Math.round(px)));
+  document.documentElement.style.setProperty("--panel-w", `${w}px`);
+  try { localStorage.setItem("state_machine_panel_w", String(w)); } catch (_) {}
+}
+
+try {
+  const savedW = Number(localStorage.getItem("state_machine_panel_w"));
+  if (Number.isFinite(savedW) && savedW > 0) setPanelWidth(savedW);
+} catch (_) {}
+
+panelSplitter.addEventListener("mousedown", (e) => {
+  resizingPanel = true;
+  startXPanel = e.clientX;
+  const current = getComputedStyle(document.documentElement).getPropertyValue("--panel-w").trim().replace("px", "");
+  startPanelW = Number(current) || 520;
+  document.body.style.userSelect = "none";
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!resizingPanel) return;
+  const dx = startXPanel - e.clientX;
+  setPanelWidth(startPanelW + dx);
+});
+
+window.addEventListener("mouseup", () => {
+  if (!resizingPanel) return;
+  resizingPanel = false;
+  document.body.style.userSelect = "";
+});
+
+// ─── Bridge JSON UI ────────────────────────────────────────
+const bridgeFileInput = document.getElementById("bridge-file-input");
+const tolBridgeFileInput = document.getElementById("tol-bridge-file-input");
+document.getElementById("btn-load-bridge").addEventListener("click", () => bridgeFileInput.click());
+document.getElementById("btn-export-bridge").addEventListener("click", exportBridgeJson);
+document.getElementById("btn-reset-static").addEventListener("click", () => {
+  resetToStaticTransitions();
+  drawArrows();
+  if (selectedId) renderPanel(selectedId);
+});
+bridgeFileInput.addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => loadBridgeJsonText(String(reader.result || ""));
+  reader.readAsText(file, "utf-8");
+  bridgeFileInput.value = "";
+});
+tolBridgeFileInput.addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || "{}"));
+      const count = applyTolBridgeRoot(parsed);
+      if (count <= 0) {
+        alert("Tolデータ（states[].tolLow/tolHigh）が見つかりません。");
+      } else if (selectedId) {
+        renderPanel(selectedId);
+      }
+    } catch (_) {
+      alert("Tol JSON解析に失敗しました。");
+    }
+  };
+  reader.readAsText(file, "utf-8");
+  tolBridgeFileInput.value = "";
+});
+
 // ─── 初期描画 ────────────────────────────────────────────────
+tryRestoreTolDraft();
+if (!tryRestoreBridgeDraft()) {
+  resetToStaticTransitions();
+}
+rebuildArrowsFromStates();
 drawArrows();
 </script>
 </body>

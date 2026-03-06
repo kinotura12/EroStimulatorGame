@@ -3,6 +3,9 @@
 // このコンポーネントをGameObjectにアタッチして使う
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class SimulationManager : MonoBehaviour
 {
@@ -14,6 +17,8 @@ public class SimulationManager : MonoBehaviour
 
     [Header("=== OutputDriver係数 ===")]
     [SerializeField] OutputDriver.OutputWeights outputWeights = new OutputDriver.OutputWeights();
+    [Header("=== 拒否モーション（Reject） ===")]
+    [SerializeField] RejectMotionSettings rejectSettings = new RejectMotionSettings();
 
     [Header("=== 現在の状態（確認用・読み取り専用） ===")]
     [SerializeField] SimState      currentState;
@@ -23,13 +28,13 @@ public class SimulationManager : MonoBehaviour
     [Header("=== デバッグ ===")]
     [SerializeField] bool debugLogging = false;
     [SerializeField] int stateOrgasmCount;  // 現在の状態での射精回数（確認用）
-
     // --- 内部クラス ---
     BandEvaluator     bandEvaluator     = new BandEvaluator();
     ParameterUpdater  parameterUpdater  = new ParameterUpdater();
     StateResolver     stateResolver     = new StateResolver();
     EndJudge          endJudge          = new EndJudge();
     OutputDriver      outputDriver;
+    readonly RejectMotionController rejectMotion = new RejectMotionController();
     readonly SimResolvedConfig runtimeConfig = new SimResolvedConfig();
 
     // タイマー類
@@ -42,13 +47,24 @@ public class SimulationManager : MonoBehaviour
     InputBand currentBand;
     bool justOrgasmed;
     bool missingInputLogged;
+    bool missingTransitionConfigLogged;
 
     // 外部から出力を取得するプロパティ
     public SimulationOutput Output        => output;
     public SimState         State         => currentState;
     public SimParameters    Param         => param;
-    public float            CurrentTolLow  => runtimeConfig.TolLow;
-    public float            CurrentTolHigh => runtimeConfig.TolHigh;
+    public float            CurrentTolLow           => runtimeConfig.TolLow;
+    public float            CurrentTolHigh          => runtimeConfig.TolHigh;
+    public float            CurrentEdgePeakHoldDuration => runtimeConfig.EdgePeakHoldDuration;
+    public InputBand        CurrentBand             => currentBand;
+    public float            AboveDuration           => aboveDuration;
+    public float            BelowDuration           => belowDuration;
+    public float            WithinDuration          => withinDuration;
+    public float            StopDuration            => stopDuration;
+    public float            RejectHabituation => rejectMotion.Habituation;
+    public float            RejectOffsetX => rejectMotion.OffsetX;
+    public float            RejectTriggerRate => rejectMotion.TriggerRate;
+
 
     // イベント
     public System.Action<SimState>       OnStateChanged;
@@ -59,6 +75,7 @@ public class SimulationManager : MonoBehaviour
     {
         EnsureRuntimeInitialized();
         param.Reset();
+        rejectMotion.Reset(GetInitialRejectHab01());
         output = default;
         currentState = SimState.Guarded;
         currentBand = InputBand.Stop;
@@ -71,6 +88,19 @@ public class SimulationManager : MonoBehaviour
     {
         EnsureRuntimeInitialized();
     }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        if (transitionConfig != null) return;
+        var guids = AssetDatabase.FindAssets("t:StateTransitionConfig");
+        if (guids == null || guids.Length == 0) return;
+        var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+        transitionConfig = AssetDatabase.LoadAssetAtPath<StateTransitionConfig>(path);
+        if (transitionConfig != null)
+            EditorUtility.SetDirty(this);
+    }
+#endif
 
     void Update()
     {
@@ -85,6 +115,17 @@ public class SimulationManager : MonoBehaviour
             }
             return;
         }
+
+        if (transitionConfig == null)
+        {
+            if (!missingTransitionConfigLogged)
+            {
+                Debug.LogError("StateTransitionConfig が未設定です。SimulationManager の transitionConfig に Assets/Sim/StateTransitionConfig.asset を割り当ててください。");
+                missingTransitionConfigLogged = true;
+            }
+            return;
+        }
+        missingTransitionConfigLogged = false;
 
         bool isEnd = IsEndState(currentState);
 
@@ -124,7 +165,7 @@ public class SimulationManager : MonoBehaviour
             ref driveRampTimer);
 
         // 3. 射精判定（エンド状態でも継続）
-        if (endJudge.CheckOrgasm(param, runtimeConfig))
+        if (endJudge.UpdateOrgasm(param, runtimeConfig, inputHandler.MainIntensity, Time.deltaTime))
         {
             justOrgasmed = true;
             if (!isEnd) stateOrgasmCount++;
@@ -175,7 +216,21 @@ public class SimulationManager : MonoBehaviour
         }
 
         // 6. 出力計算（エンド状態でも継続）
+        rejectMotion.Update(
+            Time.deltaTime,
+            param.Resistance,
+            inputHandler.IsActive,
+            inputHandler.MainIntensity,
+            inputHandler.SubA,
+            inputHandler.SubB,
+            rejectSettings);
+
         output = outputDriver.Compute(param, justOrgasmed);
+        output.RejectMotion = rejectMotion.MotionIntensity;
+        output.RejectHabituation = rejectMotion.Habituation;
+        output.EdgeTension     = param.EdgeTension;
+        output.OrgasmScale     = param.OrgasmScale;
+        output.CumulativeOrgasm = param.CumulativeOrgasm;
 
         // 7. デバッグログ
         if (debugLogging)
@@ -226,6 +281,13 @@ public class SimulationManager : MonoBehaviour
         dst.OrgasmThreshold           = src.OrgasmThreshold;
         dst.OrgasmThresholdMultiplier = src.OrgasmThresholdMultiplier;
         dst.OrgasmArousalResetTo      = src.OrgasmArousalResetTo;
+        dst.WithholdDuration          = src.WithholdDuration;
+
+        dst.EdgeNeutralIntensity = src.EdgeNeutralIntensity;
+        dst.EdgeFillRate         = src.EdgeFillRate;
+        dst.EdgeFillCurve        = src.EdgeFillCurve;
+        dst.EdgeDrainRate        = src.EdgeDrainRate;
+        dst.EdgePeakHoldDuration = src.EdgePeakHoldDuration;
 
         dst.TransitionAboveDuration               = src.TransitionAboveDuration;
         dst.TransitionBelowDuration               = src.TransitionBelowDuration;
@@ -264,8 +326,12 @@ public class SimulationManager : MonoBehaviour
         // shared 未設定時は state 値をそのまま使う
         if (sharedConfig == null) return;
 
-        // 射精FatigueとエンドカウントはSharedConfigから固定（状態上書き不可）
-        dst.OrgasmFatigueGain = sharedConfig.OrgasmFatigueGain;
+        // SharedConfig固定値（状態上書き不可）
+        dst.OrgasmFatigueGain           = sharedConfig.OrgasmFatigueGain;
+        dst.EdgeDwellScaleMax           = sharedConfig.EdgeDwellScaleMax;
+        dst.OrgasmCumulativeGain        = sharedConfig.OrgasmCumulativeGain;
+        dst.OrgasmCumulativeDecayRate   = sharedConfig.OrgasmCumulativeDecayRate;
+        dst.OrgasmCumulativeBonusScale  = sharedConfig.OrgasmCumulativeBonusScale;
         dst.EndAOrgasmCount   = sharedConfig.EndAOrgasmCount;
         dst.EndBOrgasmCount   = sharedConfig.EndBOrgasmCount;
         dst.EndCOrgasmCount   = sharedConfig.EndCOrgasmCount;
@@ -312,11 +378,24 @@ public class SimulationManager : MonoBehaviour
             dst.DriveBiasDecayStop = sharedConfig.DriveBiasDecayStop;
         }
 
+        // EdgeDecayRate は常に SharedConfig から（状態上書き不可）
+        dst.EdgeDecayRate = sharedConfig.EdgeDecayRate;
+
+        if (!src.OverrideEdge)
+        {
+            dst.EdgeNeutralIntensity = sharedConfig.EdgeNeutralIntensity;
+            dst.EdgeFillRate         = sharedConfig.EdgeFillRate;
+            dst.EdgeFillCurve        = sharedConfig.EdgeFillCurve;
+            dst.EdgeDrainRate        = sharedConfig.EdgeDrainRate;
+            dst.EdgePeakHoldDuration = sharedConfig.EdgePeakHoldDuration;
+        }
+
         if (!src.OverrideOrgasm)
         {
             dst.OrgasmThreshold           = sharedConfig.OrgasmThreshold;
             dst.OrgasmThresholdMultiplier = sharedConfig.OrgasmThresholdMultiplier;
             dst.OrgasmArousalResetTo      = sharedConfig.OrgasmArousalResetTo;
+            dst.WithholdDuration          = sharedConfig.WithholdDuration;
         }
 
         if (!src.OverrideTransition)
@@ -371,6 +450,24 @@ public class SimulationManager : MonoBehaviour
 
         if (outputDriver == null)
             outputDriver = new OutputDriver(outputWeights);
+
+#if UNITY_EDITOR
+        if (transitionConfig == null)
+        {
+            var guids = AssetDatabase.FindAssets("t:StateTransitionConfig");
+            if (guids != null && guids.Length > 0)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                transitionConfig = AssetDatabase.LoadAssetAtPath<StateTransitionConfig>(path);
+            }
+        }
+#endif
+    }
+
+    float GetInitialRejectHab01()
+    {
+        if (rejectSettings == null) return 0f;
+        return Mathf.Clamp01(rejectSettings.InitialHab);
     }
 
     bool IsEndState(SimState s) =>
@@ -382,6 +479,7 @@ public class SimulationManager : MonoBehaviour
     public void RestartSimulation()
     {
         param.Reset();
+        rejectMotion.Reset(GetInitialRejectHab01());
         output = default;
         currentState = SimState.Guarded;
         SimStateConfig rawConfig = GetConfig(currentState);

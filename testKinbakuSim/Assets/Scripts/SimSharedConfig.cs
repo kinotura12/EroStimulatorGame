@@ -38,16 +38,12 @@ public class SimSharedConfig : ScriptableObject
     public float DriveBiasDecayWithin =  0.01f;
     public float DriveBiasDecayStop   =  0.005f;
 
-    [Header("=== 射精閾値 ===")]
-    [Range(0f, 1f)] public float OrgasmThreshold = 1.0f;
-    public float OrgasmThresholdMultiplier       = 1.0f;
-
     [Header("=== 遷移判定閾値 ===")]
-    public float TransitionAboveDuration              = 5.0f;
-    public float TransitionBelowDuration              = 5.0f;
-    public float TransitionWithinDuration             = 8.0f;
-    public float TransitionDriveThreshold             = 0.7f;
-    public float TransitionFatigueThreshold           = 0.9f;
+    public float TransitionAboveDuration               = 5.0f;
+    public float TransitionBelowDuration               = 5.0f;
+    public float TransitionWithinDuration              = 8.0f;
+    public float TransitionDriveThreshold              = 0.7f;
+    public float TransitionFatigueThreshold            = 0.9f;
     public float TransitionBrokenDownArousalThreshold  = 0.6f;  // ⑦BrokenDown遷移に必要なArousal最低値
     public float TransitionSurrenderedArousalThreshold = 0.65f; // ⑤→⑥Surrendered突入に必要なArousal最低値
     public float TransitionOverriddenExitArousal       = 0.35f; // ③でArousalがこの値を下回ると②へ退場
@@ -59,9 +55,28 @@ public class SimSharedConfig : ScriptableObject
     public float FrustrationStackThreshold = 0.6f;
     public float FrustrationDriveThreshold = 0.5f;
 
-    [Header("=== 射精効果 ===")]
-    public float OrgasmFatigueGain    = 0.15f;  // 射精時Fatigue即時増加量
-    public float OrgasmArousalResetTo = 0.25f;  // 射精後ArousalをこのMax値にクランプ
+    [Header("=== 射精管理：エッジモード突入条件（OverrideOrgasm で状態別上書き可）===")]
+    [Range(0f, 1f)]
+    public float OrgasmThreshold           = 1.0f;  // Arousal がこの値以上でエッジモード突入
+    public float OrgasmThresholdMultiplier = 1.0f;  // 閾値の乗数（BrokenDown では 0.4 倍など）
+
+    [Header("=== 射精管理：EdgeTension 増加・判定（OverrideEdge で状態別上書き可）===")]
+    public float EdgeNeutralIntensity  = 0.2f;  // この入力強度を境に増加↑ / 減衰↓
+    public float EdgeFillRate          = 1.0f;  // 増加速度の乗数
+    public float WithholdDuration      = 3.0f;  // EdgeTension が 1.0 になるまでの基準秒数（短いほど早く満タン）
+    public float EdgeDecayRate         = 0.5f;  // エッジモード外での自然減衰（/秒）★状態上書き不可
+    public float EdgePeakHoldDuration  = 2.0f;  // EdgeTension=1.0 を何秒維持したら射精するか
+
+    [Header("=== 射精管理：射精時効果（OverrideOrgasm で状態別上書き可）===")]
+    public float OrgasmArousalResetTo = 0.25f;  // 射精後 Arousal をこの値以下にクランプ（高いと連続イキしやすい）
+    public float OrgasmFatigueGain    = 0.15f;  // 射精時 Fatigue 即時増加量
+
+    [HideInInspector] public float EdgeFillCurve         = 0.5f;
+    [HideInInspector] public float EdgeDrainRate         = 0.5f;
+    [HideInInspector] public float EdgeDwellScaleMax     = 10.0f;
+    [HideInInspector] public float OrgasmCumulativeGain       = 0.4f;
+    [HideInInspector] public float OrgasmCumulativeDecayRate  = 0.03f;
+    [HideInInspector] public float OrgasmCumulativeBonusScale = 0.5f;
 
     [Header("=== エンド条件 射精カウント ===")]
     public int EndAOrgasmCount = 2;   // ③ Overridden で何回射精でEnd_A
@@ -151,6 +166,15 @@ public class SimSharedConfig : ScriptableObject
             dst.OrgasmThreshold           = OrgasmThreshold;
             dst.OrgasmThresholdMultiplier = OrgasmThresholdMultiplier;
             dst.OrgasmArousalResetTo      = OrgasmArousalResetTo;
+            dst.WithholdDuration          = WithholdDuration;
+        }
+        if (!dst.OverrideEdge)
+        {
+            dst.EdgeNeutralIntensity = EdgeNeutralIntensity;
+            dst.EdgeFillRate         = EdgeFillRate;
+            dst.EdgeFillCurve        = EdgeFillCurve;
+            dst.EdgeDrainRate        = EdgeDrainRate;
+            dst.EdgePeakHoldDuration = EdgePeakHoldDuration;
         }
         if (!dst.OverrideTransition)
         {

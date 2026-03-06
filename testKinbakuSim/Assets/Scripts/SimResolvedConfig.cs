@@ -35,6 +35,15 @@ public class SimResolvedConfig
 
     public float OrgasmThreshold;
     public float OrgasmThresholdMultiplier;
+    public float WithholdDuration;  // Arousal閾値到達後、射精まで何秒我慢できるか
+    public float EdgeDecayRate;     // エッジモード外でのEdgeTension自然減衰速度（/秒）
+
+    public float EdgeNeutralIntensity;  // この強度を境に増加↑/減衰↓
+    public float EdgeFillRate;          // 増加速度乗数
+    public float EdgeFillCurve;         // 増加カーブ指数（1=線形、0.5=√曲線）
+    public float EdgeDrainRate;         // エッジモード中・中立以下での減衰速度（/秒）
+    public float EdgeDwellScaleMax;     // 何秒滞在でOrgasmScale=1.0になるか（SharedConfig固定）
+    public float EdgePeakHoldDuration;  // EdgeTension=1.0 を何秒維持したら射精するか
 
     public float TransitionAboveDuration;
     public float TransitionBelowDuration;
@@ -54,6 +63,11 @@ public class SimResolvedConfig
     // === 射精効果（SharedConfig固定、状態上書き不可） ===
     public float OrgasmFatigueGain;     // 射精時Fatigue即時増加量
     public float OrgasmArousalResetTo;  // 射精後ArousalをこのMax値にクランプ
+
+    // === 累積オーガズム（SharedConfig固定） ===
+    public float OrgasmCumulativeGain;         // 射精1回の加算量
+    public float OrgasmCumulativeDecayRate;   // 毎秒の減衰量
+    public float OrgasmCumulativeBonusScale;  // CumulativeOrgasmがOrgasmScaleに加算するボーナス乗数
 
     // === エンド条件 射精カウント（SharedConfig固定） ===
     public int EndAOrgasmCount;   // ③ End_A に必要な射精回数

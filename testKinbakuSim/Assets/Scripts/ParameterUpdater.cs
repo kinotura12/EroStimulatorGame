@@ -104,7 +104,8 @@ public class ParameterUpdater
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeStop * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeStop    * dt);
         param.Drive      = Clamp01(param.Drive      + config.DriveChangeStop      * dt);
-        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 0f, config.DriveBiasDecayStop * dt);
+        // 符号に依存せず「減衰速度」として扱う
+        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 0f, Mathf.Abs(config.DriveBiasDecayStop) * dt);
     }
 
     void UpdateBelow(SimParameters param, SimResolvedConfig config, float dt, ref float driveRampTimer)
@@ -112,11 +113,10 @@ public class ParameterUpdater
         param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeBelow     * dt);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeBelow  * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeBelow     * dt);
-        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, -1f, config.DriveBiasShiftBelow * -1f * dt);
-
-        driveRampTimer += dt;
-        if (driveRampTimer >= config.DriveChangeDelay)
-            param.Drive = Clamp01(param.Drive + config.DriveChangeBelow * dt);
+        // Below帯は常にマイナス方向へ寄せる（速度は絶対値）
+        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, -1f, Mathf.Abs(config.DriveBiasShiftBelow) * dt);
+        // Driveは遅延なしで即時反映
+        param.Drive = Clamp01(param.Drive + config.DriveChangeBelow * dt);
     }
 
     void UpdateWithin(SimParameters param, SimResolvedConfig config, float dt)
@@ -125,7 +125,8 @@ public class ParameterUpdater
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeWithin  * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeWithin     * dt * config.FatigueMultiplier);
         param.Drive      = Clamp01(param.Drive      + config.DriveChangeWithin       * dt); // 0=保持
-        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 0f, config.DriveBiasDecayWithin * dt);
+        // 符号に依存せず「減衰速度」として扱う
+        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 0f, Mathf.Abs(config.DriveBiasDecayWithin) * dt);
     }
 
     void UpdateAbove(SimParameters param, SimResolvedConfig config, float dt, ref float driveRampTimer)
@@ -133,11 +134,10 @@ public class ParameterUpdater
         param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeAbove      * dt);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeAbove   * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeAbove      * dt * config.FatigueMultiplier);
-        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 1f, config.DriveBiasShiftAbove * dt);
-
-        driveRampTimer += dt;
-        if (driveRampTimer >= config.DriveChangeDelay)
-            param.Drive = Clamp01(param.Drive + config.DriveChangeAbove * dt);
+        // Above帯は常にプラス方向へ寄せる（速度は絶対値）
+        param.DriveBias  = Mathf.MoveTowards(param.DriveBias, 1f, Mathf.Abs(config.DriveBiasShiftAbove) * dt);
+        // Driveは遅延なしで即時反映
+        param.Drive = Clamp01(param.Drive + config.DriveChangeAbove * dt);
     }
 
     void UpdateNeedMotion(

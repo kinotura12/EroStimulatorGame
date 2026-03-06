@@ -23,6 +23,7 @@ MonoBehaviour:
   OverrideFrustration: 1
   OverrideNeedMotion: 0
   OverrideSub: 0
+  OverrideEdge: 0
   TolLow: 0.2
   TolHigh: 0.4
   ArousalChangeStop: -0.03
@@ -47,9 +48,6 @@ MonoBehaviour:
   DriveBiasShiftAbove: 0.02
   DriveBiasDecayWithin: 0
   DriveBiasDecayStop: 0.005
-  OrgasmThreshold: 1
-  OrgasmThresholdMultiplier: 1
-  OrgasmArousalResetTo: 0.25
   TransitionAboveDuration: 5
   TransitionBelowDuration: 5
   TransitionWithinDuration: 8
@@ -78,3 +76,12 @@ MonoBehaviour:
   SubBDriveBiasGain: -0.01
   SubBResistanceChange: -0.01
   SubBothArousalChange: 0.06
+  OrgasmThreshold: 0.85
+  OrgasmThresholdMultiplier: 0.8
+  OrgasmArousalResetTo: 0.25
+  EdgeNeutralIntensity: 0.15
+  EdgeFillRate: 1.6
+  WithholdDuration: 3
+  EdgePeakHoldDuration: 1.5
+  EdgeFillCurve: 0.5
+  EdgeDrainRate: 0.2

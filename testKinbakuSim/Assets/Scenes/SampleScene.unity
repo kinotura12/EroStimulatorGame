@@ -480,7 +480,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -310, y: 60}
-  m_SizeDelta: {x: 260, y: 180}
+  m_SizeDelta: {x: 260, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &250691205
 MonoBehaviour:
@@ -2114,10 +2114,12 @@ MonoBehaviour:
   needMotionSwayScale: 15
   needMotionSwayMinHz: 0.3
   needMotionSwayMaxHz: 1.5
+  rejectSwayScale: 36
   pistonAmplitude: 20
   minPistonHz: 0.8
   maxPistonHz: 5
-  idleBreathScaleAmount: 0.03
+  idleBreathMinScaleAmount: 0.008
+  idleBreathScaleAmount: 0.05
   idleBreathMinHz: 0.4
   idleBreathMaxHz: 1.5
   colorCalm: {r: 0.5, g: 0.6, b: 0.8, a: 1}
@@ -2161,6 +2163,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b5bb87fbf8ae3b447b45873fc970ff9a, type: 2}
   - {fileID: 11400000, guid: 0ccde613b6b55ef4e87872877f57c742, type: 2}
   - {fileID: 11400000, guid: 1fd19dca2e640ac4cbbbe9a5c0e54728, type: 2}
+  transitionConfig: {fileID: 11400000, guid: a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4, type: 2}
   outputWeights:
     BodyTensionResistance: 0.6
     BodyTensionArousal: 0.4
@@ -2174,6 +2177,22 @@ MonoBehaviour:
     NeedMotionDrive: 0.5
     NeedMotionDriveBias: 0.5
     AftershockDecaySpeed: 2
+  rejectSettings:
+    InitialHab: 0.2
+    HabGainPerSecActive: 0.2
+    HabGainPerSecStopped: 0.35
+    HabDropOnRise: 0.5
+    HabDropOnSubStart: 0.3
+    PeakThreshold: 1.2
+    PeakBoostRate: 2.2
+    PeakFatigueCooldown: 8
+    FireRateMin: 0.05
+    FireRateMax: 0.75
+    AmpMin: 0.5
+    AmpMax: 0.85
+    MotionDuration: 0.8
+    FreqMin: 2.2
+    FreqMax: 5.5
   currentState: 0
   param:
     Arousal: 0
@@ -2184,6 +2203,11 @@ MonoBehaviour:
     NeedMotion: 0
     FrustrationStack: 0
     BrokenDownMode: 0
+    EdgeTension: 0
+    EdgeDwellTime: 0
+    EdgePeakTimer: 0
+    OrgasmScale: 0
+    CumulativeOrgasm: 0
   output:
     BodyTension: 0
     BodyYield: 0
@@ -2194,7 +2218,13 @@ MonoBehaviour:
     NeedMotion: 0
     PeakDrive: 0
     Aftershock: 0
+    RejectMotion: 0
+    RejectHabituation: 0
+    EdgeTension: 0
+    OrgasmScale: 0
+    CumulativeOrgasm: 0
   debugLogging: 0
+  stateOrgasmCount: 0
 --- !u!4 &1529548162
 Transform:
   m_ObjectHideFlags: 0

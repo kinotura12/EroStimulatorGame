@@ -49,9 +49,11 @@ public class DebugVisualizer : MonoBehaviour
     [SerializeField] float needMotionSwayScale = 26f; // NeedMotion に応じた左右揺れ幅
     [SerializeField] float needMotionSwayMinHz = 0.8f;
     [SerializeField] float needMotionSwayMaxHz = 3.5f;
+    [SerializeField] float rejectSwayScale = 36f; // RejectOffsetX に応じた左右イヤイヤ幅
     [SerializeField] float pistonAmplitude = 45f;  // ピストン上下の振幅
     [SerializeField] float minPistonHz     = 0.8f; // intensity=0 のときの速度
     [SerializeField] float maxPistonHz     = 5.0f; // intensity=1 のときの速度
+    [SerializeField] float idleBreathMinScaleAmount = 0.008f; // BreathDepth=0でも残す呼吸振幅
     [SerializeField] float idleBreathScaleAmount = 0.03f; // アイドリング時の呼吸伸縮量
     [SerializeField] float idleBreathMinHz       = 0.4f;  // BreathDepth=0 の呼吸速度
     [SerializeField] float idleBreathMaxHz       = 1.5f;  // BreathDepth=1 の呼吸速度
@@ -162,14 +164,15 @@ public class DebugVisualizer : MonoBehaviour
             pistonPhase = 0f;
         }
 
-        // 震え：Aftershock が高いほどランダムに震える
+        // 震え：Aftershock が高いほどランダムに震える。OrgasmScaleで振幅を増幅
         float shakeX = 0f;
         float shakeY = 0f;
         if (o.Aftershock > 0.05f)
         {
-            shakeTimer += Time.deltaTime * 30f;
-            shakeX = Mathf.Sin(shakeTimer * 1.3f) * o.Aftershock * shakeScale;
-            shakeY = Mathf.Sin(shakeTimer * 1.7f) * o.Aftershock * shakeScale;
+            float shakeAmp = shakeScale * Mathf.Lerp(1f, 4f, o.OrgasmScale);
+            shakeTimer += Time.deltaTime * Mathf.Lerp(30f, 60f, o.OrgasmScale);
+            shakeX = Mathf.Sin(shakeTimer * 1.3f) * o.Aftershock * shakeAmp;
+            shakeY = Mathf.Sin(shakeTimer * 1.7f) * o.Aftershock * shakeAmp;
         }
         else
         {
@@ -185,7 +188,12 @@ public class DebugVisualizer : MonoBehaviour
             swayX = Mathf.Sin(needMotionSwayPhase) * (needMotionSwayScale * o.NeedMotion);
         }
 
-        charaRect.anchoredPosition = basePosition + new Vector2(swayX + shakeX, yOffset + pistonY + shakeY);
+        // 拒否モーション（Resistance/入力変化率ベース）
+        float rejectX = 0f;
+        if (sim != null)
+            rejectX = sim.RejectOffsetX * rejectSwayScale;
+
+        charaRect.anchoredPosition = basePosition + new Vector2(swayX + rejectX + shakeX, yOffset + pistonY + shakeY);
 
         // 大きさ：BodyTension が高いほど縮む（緊張で体が固まる表現）
         float tension = o.BodyTension;
@@ -196,7 +204,10 @@ public class DebugVisualizer : MonoBehaviour
         {
             float breathHz = Mathf.Lerp(idleBreathMinHz, idleBreathMaxHz, Mathf.Clamp01(o.BreathDepth));
             idleBreathPhase += Time.deltaTime * breathHz * Mathf.PI * 2f;
-            float breathAmp = idleBreathScaleAmount * Mathf.Clamp01(o.BreathDepth);
+            float breathAmp = Mathf.Lerp(
+                Mathf.Max(0f, idleBreathMinScaleAmount),
+                Mathf.Max(0f, idleBreathScaleAmount),
+                Mathf.Clamp01(o.BreathDepth));
             float breathWave = Mathf.Sin(idleBreathPhase) * breathAmp;
             scaleY *= (1f + breathWave);
             scaleX *= (1f - breathWave * 0.35f);
@@ -227,6 +238,13 @@ public class DebugVisualizer : MonoBehaviour
 
         // なめらかに色を変える
         charaImage.color = Color.Lerp(charaImage.color, targetColor, Time.deltaTime * 3f);
+
+        // 射精フラッシュ：OrgasmScaleが高いほど白く大きく光る
+        if (o.Aftershock > 0.05f)
+        {
+            float flash = o.Aftershock * o.OrgasmScale;
+            charaImage.color = Color.Lerp(charaImage.color, Color.white, flash * 0.75f);
+        }
     }
 
     // --- テキスト表示 ---
@@ -239,18 +257,29 @@ public class DebugVisualizer : MonoBehaviour
         if (charaParamLabel != null && sim != null)
         {
             SimParameters p = sim.Param;
+            // EdgePeakTimerのプログレス表示（維持中は [▶▶▶__] で進行を見せる）
+            string peakProgress = "";
+            if (p.EdgeTension >= 1f)
+            {
+                int filled = Mathf.Clamp(Mathf.RoundToInt(p.EdgePeakTimer / Mathf.Max(0.01f, sim.CurrentEdgePeakHoldDuration) * 2f), 0, 2);
+                peakProgress = $" [{new string('▶', filled)}{new string('_', 2 - filled)}]";
+            }
             charaParamLabel.text =
                 $"Arousal    {Bar(p.Arousal)}  {p.Arousal:F2}\n" +
+                $"  射精欲   {SmallBar(p.EdgeTension)} {p.EdgeTension:F2}{peakProgress}\n" +
                 $"Resistance {Bar(p.Resistance)}  {p.Resistance:F2}\n" +
                 $"Fatigue    {Bar(p.Fatigue)}  {p.Fatigue:F2}\n" +
                 $"Drive      {Bar(p.Drive)}  {p.Drive:F2}\n" +
-                $"DriveBias  {BiasBar(p.DriveBias)}  {p.DriveBias:F2}\n" +
-                $"NeedMotion {Bar(p.NeedMotion)}  {p.NeedMotion:F2}";
+                $"DriveBias  {BiasBar(p.DriveBias)}  {p.DriveBias:F2}";
         }
 
         // デバッグ用出力パラメータ（サブ表示）
         if (paramLabel != null)
         {
+            float bandSec = sim.StopDuration;
+            if (sim.CurrentBand == InputBand.Above) bandSec = sim.AboveDuration;
+            else if (sim.CurrentBand == InputBand.Below) bandSec = sim.BelowDuration;
+            else if (sim.CurrentBand == InputBand.Within) bandSec = sim.WithinDuration;
             paramLabel.text =
                 $"[debug]\n" +
                 $"BodyTension {Bar(o.BodyTension)} {o.BodyTension:F2}\n" +
@@ -261,7 +290,14 @@ public class DebugVisualizer : MonoBehaviour
                 $"ControlMask {Bar(o.ControlMask)} {o.ControlMask:F2}\n" +
                 $"NeedMotion  {Bar(o.NeedMotion)} {o.NeedMotion:F2}\n" +
                 $"PeakDrive   {Bar(o.PeakDrive)} {o.PeakDrive:F2}\n" +
-                $"Aftershock  {Bar(o.Aftershock)} {o.Aftershock:F2}";
+                $"Aftershock  {Bar(o.Aftershock)} {o.Aftershock:F2}\n" +
+                $"RejectMove  {Bar(o.RejectMotion)} {o.RejectMotion:F2}\n" +
+                $"RejectHab   {Bar(o.RejectHabituation)} {o.RejectHabituation:F2}\n" +
+                $"RejectRate  {sim.RejectTriggerRate:F2}/s\n" +
+                $"EdgePeak    {sim.Param.EdgePeakTimer:F1}s  DwellTime {sim.Param.EdgeDwellTime:F1}s\n" +
+                $"Cumulative  {Bar(o.CumulativeOrgasm)} {o.CumulativeOrgasm:F2}\n" +
+                $"mainActive  {(inputHandler != null && inputHandler.IsActive ? 1 : 0)}\n" +
+                $"Band        {sim.CurrentBand} ({bandSec:F1}s)";
         }
     }
 
@@ -270,6 +306,13 @@ public class DebugVisualizer : MonoBehaviour
     {
         int filled = Mathf.RoundToInt(Mathf.Clamp01(value) * 10f);
         return "[" + new string('█', filled) + new string('░', 10 - filled) + "]";
+    }
+
+    // 小さいバー表示（0.0～1.0 を5段階で表示）
+    string SmallBar(float value)
+    {
+        int filled = Mathf.RoundToInt(Mathf.Clamp01(value) * 5f);
+        return "[" + new string('█', filled) + new string('░', 5 - filled) + "]";
     }
 
     // --- SubA/B インジケーター振動 ---

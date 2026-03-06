@@ -521,12 +521,54 @@ let overrides = JSON.parse(JSON.stringify(DEFAULT_OVERRIDES));
 let selectedParam = 'Arousal';
 let selectedSubParam = 'Arousal';
 
+function clamp01(v, fallback = 0) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(1, n));
+}
+
+function normalizeTolPair(lowRaw, highRaw, defLow, defHigh) {
+  let low = clamp01(lowRaw, defLow);
+  let high = clamp01(highRaw, defHigh);
+  if (high < low + 0.01) {
+    high = Math.min(1, low + 0.01);
+    if (high < low + 0.01) {
+      low = Math.max(0, high - 0.01);
+    }
+  }
+  return { low: Number(low.toFixed(2)), high: Number(high.toFixed(2)) };
+}
+
+function normalizeStates(rawStates) {
+  const input = Array.isArray(rawStates) ? rawStates : [];
+  const byId = {};
+  input.forEach(s => {
+    if (!s || !s.id) return;
+    byId[s.id] = s;
+  });
+
+  const merged = DEFAULT_STATES.map(def => {
+    const src = byId[def.id] || {};
+    const tol = normalizeTolPair(src.tolLow, src.tolHigh, def.tolLow, def.tolHigh);
+    return {
+      id: def.id,
+      num: def.num,
+      name: def.name,
+      color: def.color,
+      tolLow: tol.low,
+      tolHigh: tol.high
+    };
+  });
+
+  return merged;
+}
+
 function loadFromStorage() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     const parsed = JSON.parse(saved);
-    if (parsed.states) states = parsed.states;
+    if (parsed.states) states = normalizeStates(parsed.states);
     if (parsed.heatData) heatData = parsed.heatData;
     if (parsed.subHeatData) subHeatData = parsed.subHeatData;
     if (parsed.sharedHeatData) sharedHeatData = parsed.sharedHeatData;
@@ -1174,7 +1216,7 @@ document.getElementById('file-import').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const parsed = JSON.parse(ev.target.result);
-      if (parsed.states) states = parsed.states;
+      if (parsed.states) states = normalizeStates(parsed.states);
       if (parsed.heatData) heatData = parsed.heatData;
       else if (parsed.heatEntries) heatData = entriesToHeat(parsed.heatEntries);
       if (parsed.subHeatData) subHeatData = parsed.subHeatData;

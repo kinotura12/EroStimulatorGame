@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7439512c987466f47a21233aceace972, type: 3}
+  m_Name: StateConfig_BrokenDown
+  m_EditorClassIdentifier: Assembly-CSharp::SimStateConfig
+  State: 6
+  OverrideArousal: 0
+  OverrideResistance: 0
+  OverrideFatigue: 1
+  OverrideDrive: 0
+  OverrideDriveBias: 0
+  OverrideOrgasm: 1
+  OverrideTransition: 0
+  OverrideFrustration: 0
+  OverrideNeedMotion: 0
+  OverrideSub: 0
+  TolLow: 0.05
+  TolHigh: 0.95
+  ArousalChangeStop: -0.03
+  ArousalChangeBelow: 0.02
+  ArousalChangeWithin: 0.08
+  ArousalChangeAbove: 0.15
+  ResistanceChangeStop: -0.01
+  ResistanceChangeBelow: -0.01
+  ResistanceChangeWithin: -0.01
+  ResistanceChangeAbove: 0.02
+  FatigueChangeStop: -0.03
+  FatigueChangeBelow: -0.005
+  FatigueChangeWithin: 0.02
+  FatigueChangeAbove: 0.05
+  FatigueMultiplier: 2
+  DriveChangeStop: -0.005
+  DriveChangeBelow: 0.02
+  DriveChangeWithin: 0
+  DriveChangeAbove: 0.02
+  DriveChangeDelay: 5
+  DriveBiasShiftBelow: 0.01
+  DriveBiasShiftAbove: 0.02
+  DriveBiasDecayWithin: 0
+  DriveBiasDecayStop: 0.005
+  OrgasmThreshold: 1
+  OrgasmThresholdMultiplier: 1
+  OrgasmArousalResetTo: 0.7
+  TransitionAboveDuration: 5
+  TransitionBelowDuration: 5
+  TransitionWithinDuration: 8
+  TransitionDriveThreshold: 0.7
+  TransitionFatigueThreshold: 0.9
+  TransitionBrokenDownArousalThreshold: 0.6
+  TransitionSurrenderedArousalThreshold: 0.65
+  TransitionOverriddenExitArousal: 0.35
+  TransitionAcclimatingArousalThreshold: 0.4
+  TransitionDefensiveResistanceThreshold: 0.8
+  FrustrationStackGain: 0.05
+  FrustrationStackThreshold: 0.6
+  FrustrationDriveThreshold: 0.5
+  NeedMotionStopCalmChange: -0.1
+  NeedMotionStopArousedChange: 0.03
+  NeedMotionBelowChange: 0.06
+  NeedMotionWithinChange: -0.1
+  NeedMotionAboveChange: -0.12
+  NeedMotionArousalThreshold: 0.5
+  SubADriveChange: 0.02
+  SubAArousalChange: 0.04
+  SubADriveBiasGain: 0.03
+  SubAResistanceChange: -0.03
+  SubBDriveChange: 0.02
+  SubBArousalChange: 0.02
+  SubBDriveBiasGain: -0.01
+  SubBResistanceChange: -0.01
+  SubBothArousalChange: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StateConfig_Guarded
   m_EditorClassIdentifier: Assembly-CSharp::SimStateConfig
   State: 0
-  OverrideArousal: 0
+  OverrideArousal: 1
   OverrideResistance: 1
   OverrideFatigue: 0
   OverrideDrive: 0
@@ -27,8 +27,8 @@ MonoBehaviour:
   TolHigh: 0.5
   ArousalChangeStop: -0.03
   ArousalChangeBelow: 0.02
-  ArousalChangeWithin: 0.08
-  ArousalChangeAbove: 0.15
+  ArousalChangeWithin: 0.03
+  ArousalChangeAbove: 0.02
   ResistanceChangeStop: -0.01
   ResistanceChangeBelow: -0.01
   ResistanceChangeWithin: -0.03
@@ -77,4 +77,4 @@ MonoBehaviour:
   SubBArousalChange: 0.02
   SubBDriveBiasGain: -0.01
   SubBResistanceChange: 0.03
-  SubBothArousalChange: 0
+  SubBothArousalChange: 0.06

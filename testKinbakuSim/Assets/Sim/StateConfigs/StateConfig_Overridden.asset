@@ -77,4 +77,4 @@ MonoBehaviour:
   SubBArousalChange: 0.02
   SubBDriveBiasGain: -0.01
   SubBResistanceChange: -0.01
-  SubBothArousalChange: 0
+  SubBothArousalChange: 0.06

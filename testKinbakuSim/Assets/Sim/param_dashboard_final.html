@@ -304,7 +304,7 @@ textarea.json-out {
 <header>
   <div class="header-left">
     <h1>パラメータ感度ダッシュボード</h1>
-    <span class="subtitle">値をクリックで編集 — 自動保存</span>
+    <span class="subtitle">Unity実装値ベース（初期値） — 値をクリックで編集</span>
   </div>
   <div class="header-actions">
     <span class="save-indicator" id="save-indicator">💾 保存しました</span>
@@ -315,13 +315,13 @@ textarea.json-out {
 </header>
 
 <div class="tabs">
-  <div class="tab active" data-tab="tol">① 刺激帯ビジュアライザ</div>
-  <div class="tab" data-tab="heat">② パラメータ別感度マップ</div>
-  <div class="tab" data-tab="sub">③ Sub刺激感度マップ</div>
+  <div class="tab active" data-tab="heat">① パラメータ別感度マップ</div>
+  <div class="tab" data-tab="sub">② Sub刺激感度マップ</div>
+  <div class="tab" data-tab="tol">③ 刺激帯ビジュアライザ</div>
 </div>
 
 <!-- TAB A -->
-<div class="tab-content active" id="tab-tol">
+<div class="tab-content" id="tab-tol">
   <div class="section-label">各状態の TolLow / TolHigh — スライダーで編集可</div>
   <div class="legend-row">
     <div class="legend-item"><div class="legend-swatch" style="background:rgba(96,165,250,.35)"></div>Below</div>
@@ -333,7 +333,7 @@ textarea.json-out {
 </div>
 
 <!-- TAB B -->
-<div class="tab-content" id="tab-heat">
+<div class="tab-content active" id="tab-heat">
   <div class="section-label">パラメータを選んで Stop/Below/Within/Above × 7状態の増減を確認 — 数値をクリックで編集</div>
   <div class="param-selector" id="param-selector"></div>
   <div class="heat-wrap">
@@ -391,49 +391,58 @@ const DEFAULT_STATES = [
 const PARAMS = ['Arousal','Resistance','Fatigue','Drive','DriveBias','NeedMotion','FrustrationStack'];
 const BANDS  = ['Stop','Below','Within','Above'];
 const SUB_INPUTS = ['SubA','SubB','SubA+B'];
+const OVERRIDE_GROUP_BY_PARAM = {
+  Arousal: 'OverrideArousal',
+  Resistance: 'OverrideResistance',
+  Fatigue: 'OverrideFatigue',
+  Drive: 'OverrideDrive',
+  DriveBias: 'OverrideDriveBias',
+  NeedMotion: 'OverrideNeedMotion',
+  FrustrationStack: 'OverrideFrustration',
+};
 
 const DEFAULT_HEAT = {
   Guarded: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.03, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
   Defensive: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.03, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
   Overridden: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
   FrustratedCraving: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
   Acclimating: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.05, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.05, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.04, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.05, FrustrationStack:0.00 },
   },
   Surrendered: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
     Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
     Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
   BrokenDown: {
-    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.03, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
-    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.04,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
-    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.10,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.03, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
   },
 };
 
@@ -475,7 +484,30 @@ const DEFAULT_SUB_HEAT = {
   },
 };
 
-const STORAGE_KEY = 'param_dashboard_v1';
+const DEFAULT_SHARED_HEAT = {
+  Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias:+0.005, NeedMotion:-0.10, FrustrationStack:0.00 },
+  Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:+0.01,  NeedMotion:+0.06, FrustrationStack:+0.05 },
+  Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+  Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+};
+
+const DEFAULT_SHARED_SUB_HEAT = {
+  SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+  SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+  'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+};
+
+const DEFAULT_OVERRIDES = {
+  Guarded:           { OverrideArousal:false, OverrideResistance:true,  OverrideFatigue:false, OverrideDrive:false, OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:false, OverrideSub:true  },
+  Defensive:         { OverrideArousal:false, OverrideResistance:true,  OverrideFatigue:false, OverrideDrive:false, OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:true,  OverrideSub:false },
+  Overridden:        { OverrideArousal:false, OverrideResistance:false, OverrideFatigue:false, OverrideDrive:true,  OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:false, OverrideSub:false },
+  FrustratedCraving: { OverrideArousal:false, OverrideResistance:false, OverrideFatigue:false, OverrideDrive:true,  OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:false, OverrideSub:false },
+  Acclimating:       { OverrideArousal:false, OverrideResistance:false, OverrideFatigue:false, OverrideDrive:true,  OverrideDriveBias:false, OverrideNeedMotion:true,  OverrideFrustration:false, OverrideSub:false },
+  Surrendered:       { OverrideArousal:false, OverrideResistance:false, OverrideFatigue:false, OverrideDrive:false, OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:false, OverrideSub:false },
+  BrokenDown:        { OverrideArousal:false, OverrideResistance:false, OverrideFatigue:true,  OverrideDrive:false, OverrideDriveBias:false, OverrideNeedMotion:false, OverrideFrustration:false, OverrideSub:false },
+};
+
+const STORAGE_KEY = 'param_dashboard_v2_unity_truth';
 
 // ═══════════════════════════════════════
 // 状態管理
@@ -483,6 +515,9 @@ const STORAGE_KEY = 'param_dashboard_v1';
 let states = JSON.parse(JSON.stringify(DEFAULT_STATES));
 let heatData = JSON.parse(JSON.stringify(DEFAULT_HEAT));
 let subHeatData = JSON.parse(JSON.stringify(DEFAULT_SUB_HEAT));
+let sharedHeatData = JSON.parse(JSON.stringify(DEFAULT_SHARED_HEAT));
+let sharedSubHeatData = JSON.parse(JSON.stringify(DEFAULT_SHARED_SUB_HEAT));
+let overrides = JSON.parse(JSON.stringify(DEFAULT_OVERRIDES));
 let selectedParam = 'Arousal';
 let selectedSubParam = 'Arousal';
 
@@ -494,6 +529,9 @@ function loadFromStorage() {
     if (parsed.states) states = parsed.states;
     if (parsed.heatData) heatData = parsed.heatData;
     if (parsed.subHeatData) subHeatData = parsed.subHeatData;
+    if (parsed.sharedHeatData) sharedHeatData = parsed.sharedHeatData;
+    if (parsed.sharedSubHeatData) sharedSubHeatData = parsed.sharedSubHeatData;
+    if (parsed.overrides) overrides = parsed.overrides;
   } catch(e) { console.warn('load failed', e); }
 }
 
@@ -502,8 +540,10 @@ function saveToStorage() {
   clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ states, heatData, subHeatData }));
-        const ind = document.getElementById('save-indicator');
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            states, heatData, subHeatData, sharedHeatData, sharedSubHeatData, overrides
+          }));
+          const ind = document.getElementById('save-indicator');
       ind.classList.add('show');
       setTimeout(() => ind.classList.remove('show'), 1800);
     } catch(e) { console.warn('save failed', e); }
@@ -637,10 +677,17 @@ function buildHeatTable() {
   const table = document.getElementById('heat-table');
   table.innerHTML = '';
 
+  const overrideGroup = OVERRIDE_GROUP_BY_PARAM[selectedParam];
   let maxAbs = 0;
+  BANDS.forEach(b => {
+    const v = Math.abs((sharedHeatData?.[b]?.[selectedParam]) ?? 0);
+    if (v > maxAbs) maxAbs = v;
+  });
   states.forEach(s => {
     BANDS.forEach(b => {
-      const v = Math.abs((heatData[s.id]?.[b]?.[selectedParam]) ?? 0);
+      const useOwn = !!(overrides?.[s.id]?.[overrideGroup]);
+      const source = useOwn ? heatData[s.id] : sharedHeatData;
+      const v = Math.abs((source?.[b]?.[selectedParam]) ?? 0);
       if (v > maxAbs) maxAbs = v;
     });
   });
@@ -653,6 +700,11 @@ function buildHeatTable() {
   cornerTh.className = 'row-header';
   cornerTh.textContent = '状態';
   headRow.appendChild(cornerTh);
+
+  const ovTh = document.createElement('th');
+  ovTh.innerHTML = '<span style="color:var(--muted);font-weight:500">Override</span>';
+  headRow.appendChild(ovTh);
+
   BANDS.forEach(band => {
     const th = document.createElement('th');
     const bColor = { Stop:'#94a3b8', Below:'#60a5fa', Within:'#34d399', Above:'#f87171' }[band];
@@ -664,6 +716,24 @@ function buildHeatTable() {
 
   // tbody
   const tbody = document.createElement('tbody');
+
+  const sharedRow = document.createElement('tr');
+  const sharedStateTd = document.createElement('td');
+  sharedStateTd.className = 'state-cell';
+  sharedStateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:#64748b"></div><span class="state-label-num">基準</span><span class="state-label-text">SharedConfig</span></div>`;
+  sharedRow.appendChild(sharedStateTd);
+  const sharedOvTd = document.createElement('td');
+  sharedOvTd.innerHTML = '<span style="font-size:10px;color:var(--muted)">—</span>';
+  sharedRow.appendChild(sharedOvTd);
+  BANDS.forEach(band => {
+    const val = (sharedHeatData?.[band]?.[selectedParam]) ?? 0;
+    const pct = (Math.abs(val) / maxAbs) * 50;
+    const td = document.createElement('td');
+    td.appendChild(makeCell(val, pct, { target:'sharedHeat', band, param:selectedParam }, true));
+    sharedRow.appendChild(td);
+  });
+  tbody.appendChild(sharedRow);
+
   states.forEach(s => {
     const row = document.createElement('tr');
 
@@ -672,11 +742,29 @@ function buildHeatTable() {
     stateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:${s.color}"></div><span class="state-label-num">${s.num}</span><span class="state-label-text">${s.name}</span></div>`;
     row.appendChild(stateTd);
 
+    const ovTd = document.createElement('td');
+    const checked = !!(overrides?.[s.id]?.[overrideGroup]);
+    const ov = document.createElement('input');
+    ov.type = 'checkbox';
+    ov.checked = checked;
+    ov.title = overrideGroup;
+    ov.addEventListener('change', () => {
+      if (!overrides[s.id]) overrides[s.id] = {};
+      overrides[s.id][overrideGroup] = ov.checked;
+      saveToStorage();
+      buildHeatTable();
+    });
+    ovTd.appendChild(ov);
+    row.appendChild(ovTd);
+
     BANDS.forEach(band => {
-      const val = (heatData[s.id]?.[band]?.[selectedParam]) ?? 0;
+      const useOwn = !!(overrides?.[s.id]?.[overrideGroup]);
+      const source = useOwn ? heatData[s.id] : sharedHeatData;
+      const val = (source?.[band]?.[selectedParam]) ?? 0;
       const pct = (Math.abs(val) / maxAbs) * 50;
       const td = document.createElement('td');
-      td.appendChild(makeCell(val, pct, s.id, band, selectedParam));
+      td.appendChild(makeCell(val, pct, { target:'heat', stateId:s.id, band, param:selectedParam }, useOwn));
+      if (!useOwn) td.style.opacity = 0.72;
       row.appendChild(td);
     });
 
@@ -706,10 +794,17 @@ function buildSubHeatTable() {
   const table = document.getElementById('sub-heat-table');
   table.innerHTML = '';
 
+  const overrideGroup = 'OverrideSub';
   let maxAbs = 0;
+  SUB_INPUTS.forEach(b => {
+    const v = Math.abs((sharedSubHeatData?.[b]?.[selectedSubParam]) ?? 0);
+    if (v > maxAbs) maxAbs = v;
+  });
   states.forEach(s => {
     SUB_INPUTS.forEach(b => {
-      const v = Math.abs((subHeatData[s.id]?.[b]?.[selectedSubParam]) ?? 0);
+      const useOwn = !!(overrides?.[s.id]?.[overrideGroup]);
+      const source = useOwn ? subHeatData[s.id] : sharedSubHeatData;
+      const v = Math.abs((source?.[b]?.[selectedSubParam]) ?? 0);
       if (v > maxAbs) maxAbs = v;
     });
   });
@@ -722,6 +817,10 @@ function buildSubHeatTable() {
   cornerTh.textContent = '状態';
   headRow.appendChild(cornerTh);
 
+  const ovTh = document.createElement('th');
+  ovTh.innerHTML = '<span style="color:var(--muted);font-weight:500">Override</span>';
+  headRow.appendChild(ovTh);
+
   SUB_INPUTS.forEach(input => {
     const th = document.createElement('th');
     th.innerHTML = `<span style="font-weight:500">${input}</span>`;
@@ -732,6 +831,23 @@ function buildSubHeatTable() {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
+  const sharedRow = document.createElement('tr');
+  const sharedStateTd = document.createElement('td');
+  sharedStateTd.className = 'state-cell';
+  sharedStateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:#64748b"></div><span class="state-label-num">基準</span><span class="state-label-text">SharedConfig</span></div>`;
+  sharedRow.appendChild(sharedStateTd);
+  const sharedOvTd = document.createElement('td');
+  sharedOvTd.innerHTML = '<span style="font-size:10px;color:var(--muted)">—</span>';
+  sharedRow.appendChild(sharedOvTd);
+  SUB_INPUTS.forEach(input => {
+    const val = (sharedSubHeatData?.[input]?.[selectedSubParam]) ?? 0;
+    const pct = (Math.abs(val) / maxAbs) * 50;
+    const td = document.createElement('td');
+    td.appendChild(makeSubCell(val, pct, { target:'sharedSub', inputBand:input, param:selectedSubParam }, true));
+    sharedRow.appendChild(td);
+  });
+  tbody.appendChild(sharedRow);
+
   states.forEach(s => {
     const row = document.createElement('tr');
     const stateTd = document.createElement('td');
@@ -739,11 +855,29 @@ function buildSubHeatTable() {
     stateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:${s.color}"></div><span class="state-label-num">${s.num}</span><span class="state-label-text">${s.name}</span></div>`;
     row.appendChild(stateTd);
 
+    const ovTd = document.createElement('td');
+    const checked = !!(overrides?.[s.id]?.[overrideGroup]);
+    const ov = document.createElement('input');
+    ov.type = 'checkbox';
+    ov.checked = checked;
+    ov.title = overrideGroup;
+    ov.addEventListener('change', () => {
+      if (!overrides[s.id]) overrides[s.id] = {};
+      overrides[s.id][overrideGroup] = ov.checked;
+      saveToStorage();
+      buildSubHeatTable();
+    });
+    ovTd.appendChild(ov);
+    row.appendChild(ovTd);
+
     SUB_INPUTS.forEach(input => {
-      const val = (subHeatData[s.id]?.[input]?.[selectedSubParam]) ?? 0;
+      const useOwn = !!(overrides?.[s.id]?.[overrideGroup]);
+      const source = useOwn ? subHeatData[s.id] : sharedSubHeatData;
+      const val = (source?.[input]?.[selectedSubParam]) ?? 0;
       const pct = (Math.abs(val) / maxAbs) * 50;
       const td = document.createElement('td');
-      td.appendChild(makeSubCell(val, pct, s.id, input, selectedSubParam));
+      td.appendChild(makeSubCell(val, pct, { target:'sub', stateId:s.id, inputBand:input, param:selectedSubParam }, useOwn));
+      if (!useOwn) td.style.opacity = 0.72;
       row.appendChild(td);
     });
     tbody.appendChild(row);
@@ -751,7 +885,7 @@ function buildSubHeatTable() {
   table.appendChild(tbody);
 }
 
-function makeSubCell(val, pct, stateId, inputBand, param) {
+function makeSubCell(val, pct, ctx, editable) {
   const wrap = document.createElement('div');
   wrap.className = 'cell-wrap';
 
@@ -768,13 +902,18 @@ function makeSubCell(val, pct, stateId, inputBand, param) {
   bar.style.width = pct + '%';
   barBg.appendChild(bar);
 
-  valEl.addEventListener('click', () => startSubEdit(valEl, bar, stateId, inputBand, param));
+  if (editable)
+    valEl.addEventListener('click', () => startSubEdit(valEl, bar, ctx));
+  else
+    valEl.style.cursor = 'default';
   wrap.append(valEl, barBg);
   return wrap;
 }
 
-function startSubEdit(valEl, bar, stateId, inputBand, param) {
-  const currentVal = (subHeatData[stateId]?.[inputBand]?.[param]) ?? 0;
+function startSubEdit(valEl, bar, ctx) {
+  const currentVal = ctx.target === 'sharedSub'
+    ? ((sharedSubHeatData?.[ctx.inputBand]?.[ctx.param]) ?? 0)
+    : ((subHeatData?.[ctx.stateId]?.[ctx.inputBand]?.[ctx.param]) ?? 0);
   const input = document.createElement('input');
   input.type = 'number';
   input.className = 'cell-edit-input';
@@ -789,9 +928,14 @@ function startSubEdit(valEl, bar, stateId, inputBand, param) {
     let v = parseFloat(input.value);
     if (isNaN(v)) v = currentVal;
     v = Math.max(-1, Math.min(1, v));
-    if (!subHeatData[stateId]) subHeatData[stateId] = {};
-    if (!subHeatData[stateId][inputBand]) subHeatData[stateId][inputBand] = {};
-    subHeatData[stateId][inputBand][param] = v;
+    if (ctx.target === 'sharedSub') {
+      if (!sharedSubHeatData[ctx.inputBand]) sharedSubHeatData[ctx.inputBand] = {};
+      sharedSubHeatData[ctx.inputBand][ctx.param] = v;
+    } else {
+      if (!subHeatData[ctx.stateId]) subHeatData[ctx.stateId] = {};
+      if (!subHeatData[ctx.stateId][ctx.inputBand]) subHeatData[ctx.stateId][ctx.inputBand] = {};
+      subHeatData[ctx.stateId][ctx.inputBand][ctx.param] = v;
+    }
     saveToStorage();
 
     const sign = v > 0 ? '+' : '';
@@ -799,9 +943,16 @@ function startSubEdit(valEl, bar, stateId, inputBand, param) {
     valEl.style.color = v > 0 ? '#34d399' : v < 0 ? '#f87171' : 'var(--muted)';
 
     let maxAbs = 0;
+    const p = ctx.param;
+    SUB_INPUTS.forEach(b => {
+      const x = Math.abs((sharedSubHeatData?.[b]?.[p]) ?? 0);
+      if (x > maxAbs) maxAbs = x;
+    });
     states.forEach(s => {
       SUB_INPUTS.forEach(b => {
-        const x = Math.abs((subHeatData[s.id]?.[b]?.[param]) ?? 0);
+        const useOwn = !!(overrides?.[s.id]?.OverrideSub);
+        const source = useOwn ? subHeatData[s.id] : sharedSubHeatData;
+        const x = Math.abs((source?.[b]?.[p]) ?? 0);
         if (x > maxAbs) maxAbs = x;
       });
     });
@@ -811,6 +962,7 @@ function startSubEdit(valEl, bar, stateId, inputBand, param) {
     bar.style.width = pct + '%';
 
     input.replaceWith(valEl);
+    buildSubHeatTable();
   };
 
   input.addEventListener('keydown', e => {
@@ -820,7 +972,7 @@ function startSubEdit(valEl, bar, stateId, inputBand, param) {
   input.addEventListener('blur', commit);
 }
 
-function makeCell(val, pct, stateId, band, param) {
+function makeCell(val, pct, ctx, editable) {
   const wrap = document.createElement('div');
   wrap.className = 'cell-wrap';
 
@@ -837,15 +989,20 @@ function makeCell(val, pct, stateId, band, param) {
   bar.style.width = pct + '%';
   barBg.appendChild(bar);
 
-  // クリックで編集
-  valEl.addEventListener('click', () => startEdit(valEl, barBg, bar, stateId, band, param));
+  if (editable) {
+    valEl.addEventListener('click', () => startEdit(valEl, bar, ctx));
+  } else {
+    valEl.style.cursor = 'default';
+  }
 
   wrap.append(valEl, barBg);
   return wrap;
 }
 
-function startEdit(valEl, barBg, bar, stateId, band, param) {
-  const currentVal = (heatData[stateId]?.[band]?.[param]) ?? 0;
+function startEdit(valEl, bar, ctx) {
+  const currentVal = ctx.target === 'sharedHeat'
+    ? ((sharedHeatData?.[ctx.band]?.[ctx.param]) ?? 0)
+    : ((heatData?.[ctx.stateId]?.[ctx.band]?.[ctx.param]) ?? 0);
   const input = document.createElement('input');
   input.type = 'number';
   input.className = 'cell-edit-input';
@@ -860,9 +1017,14 @@ function startEdit(valEl, barBg, bar, stateId, band, param) {
     let v = parseFloat(input.value);
     if (isNaN(v)) v = currentVal;
     v = Math.max(-1, Math.min(1, v));
-    if (!heatData[stateId]) heatData[stateId] = {};
-    if (!heatData[stateId][band]) heatData[stateId][band] = {};
-    heatData[stateId][band][param] = v;
+    if (ctx.target === 'sharedHeat') {
+      if (!sharedHeatData[ctx.band]) sharedHeatData[ctx.band] = {};
+      sharedHeatData[ctx.band][ctx.param] = v;
+    } else {
+      if (!heatData[ctx.stateId]) heatData[ctx.stateId] = {};
+      if (!heatData[ctx.stateId][ctx.band]) heatData[ctx.stateId][ctx.band] = {};
+      heatData[ctx.stateId][ctx.band][ctx.param] = v;
+    }
     saveToStorage();
 
     const sign = v > 0 ? '+' : '';
@@ -871,13 +1033,27 @@ function startEdit(valEl, barBg, bar, stateId, band, param) {
 
     // バー更新（maxAbsを再計算）
     let maxAbs = 0;
-    states.forEach(s => { BANDS.forEach(b => { const x = Math.abs((heatData[s.id]?.[b]?.[param]) ?? 0); if (x > maxAbs) maxAbs = x; }); });
+    const p = ctx.param;
+    BANDS.forEach(b => {
+      const x = Math.abs((sharedHeatData?.[b]?.[p]) ?? 0);
+      if (x > maxAbs) maxAbs = x;
+    });
+    states.forEach(s => {
+      const group = OVERRIDE_GROUP_BY_PARAM[p];
+      BANDS.forEach(b => {
+        const useOwn = !!(overrides?.[s.id]?.[group]);
+        const source = useOwn ? heatData[s.id] : sharedHeatData;
+        const x = Math.abs((source?.[b]?.[p]) ?? 0);
+        if (x > maxAbs) maxAbs = x;
+      });
+    });
     if (maxAbs === 0) maxAbs = 1;
     const pct = (Math.abs(v) / maxAbs) * 50;
     bar.className = 'cell-bar ' + (v >= 0 ? 'cell-bar-pos' : 'cell-bar-neg');
     bar.style.width = pct + '%';
 
     input.replaceWith(valEl);
+    buildHeatTable();
   };
 
   input.addEventListener('keydown', e => {
@@ -891,7 +1067,68 @@ function startEdit(valEl, barBg, bar, stateId, band, param) {
 // JSON エクスポート
 // ═══════════════════════════════════════
 function getExportData() {
-  return { states, heatData, subHeatData, exportedAt: new Date().toISOString() };
+  return {
+    version: 1,
+    states: states.map(s => ({ id: s.id, tolLow: Number(s.tolLow), tolHigh: Number(s.tolHigh) })),
+    overrides,
+    overrideEntries: toOverrideEntries(overrides),
+    heatEntries: toHeatEntries(heatData),
+    subHeatEntries: toHeatEntries(subHeatData),
+    sharedHeatEntries: toHeatEntries({ SharedConfig: sharedHeatData }),
+    sharedSubHeatEntries: toHeatEntries({ SharedConfig: sharedSubHeatData }),
+    exportedAt: new Date().toISOString()
+  };
+}
+
+function toHeatEntries(src) {
+  const out = [];
+  Object.keys(src || {}).forEach(stateId => {
+    const byBand = src[stateId] || {};
+    Object.keys(byBand).forEach(band => {
+      const byParam = byBand[band] || {};
+      Object.keys(byParam).forEach(param => {
+        out.push({
+          stateId,
+          band,
+          param,
+          value: Number(byParam[param] ?? 0)
+        });
+      });
+    });
+  });
+  return out;
+}
+
+function entriesToHeat(entries) {
+  const out = {};
+  (entries || []).forEach(e => {
+    if (!e || !e.stateId || !e.band || !e.param) return;
+    if (!out[e.stateId]) out[e.stateId] = {};
+    if (!out[e.stateId][e.band]) out[e.stateId][e.band] = {};
+    out[e.stateId][e.band][e.param] = Number(e.value ?? 0);
+  });
+  return out;
+}
+
+function toOverrideEntries(src) {
+  const out = [];
+  Object.keys(src || {}).forEach(stateId => {
+    const byGroup = src[stateId] || {};
+    Object.keys(byGroup).forEach(group => {
+      out.push({ stateId, group, enabled: !!byGroup[group] });
+    });
+  });
+  return out;
+}
+
+function entriesToOverrides(entries) {
+  const out = {};
+  (entries || []).forEach(e => {
+    if (!e || !e.stateId || !e.group) return;
+    if (!out[e.stateId]) out[e.stateId] = {};
+    out[e.stateId][e.group] = !!e.enabled;
+  });
+  return out;
 }
 
 document.getElementById('btn-export').addEventListener('click', () => {
@@ -939,7 +1176,21 @@ document.getElementById('file-import').addEventListener('change', e => {
       const parsed = JSON.parse(ev.target.result);
       if (parsed.states) states = parsed.states;
       if (parsed.heatData) heatData = parsed.heatData;
+      else if (parsed.heatEntries) heatData = entriesToHeat(parsed.heatEntries);
       if (parsed.subHeatData) subHeatData = parsed.subHeatData;
+      else if (parsed.subHeatEntries) subHeatData = entriesToHeat(parsed.subHeatEntries);
+      if (parsed.sharedHeatData) sharedHeatData = parsed.sharedHeatData;
+      else if (parsed.sharedHeatEntries) {
+        const tmp = entriesToHeat(parsed.sharedHeatEntries);
+        if (tmp.SharedConfig) sharedHeatData = tmp.SharedConfig;
+      }
+      if (parsed.sharedSubHeatData) sharedSubHeatData = parsed.sharedSubHeatData;
+      else if (parsed.sharedSubHeatEntries) {
+        const tmp = entriesToHeat(parsed.sharedSubHeatEntries);
+        if (tmp.SharedConfig) sharedSubHeatData = tmp.SharedConfig;
+      }
+      if (parsed.overrides) overrides = parsed.overrides;
+      else if (parsed.overrideEntries) overrides = entriesToOverrides(parsed.overrideEntries);
       saveToStorage();
       buildTolGrid();
       buildHeatTable();
@@ -961,6 +1212,9 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   states = JSON.parse(JSON.stringify(DEFAULT_STATES));
   heatData = JSON.parse(JSON.stringify(DEFAULT_HEAT));
   subHeatData = JSON.parse(JSON.stringify(DEFAULT_SUB_HEAT));
+  sharedHeatData = JSON.parse(JSON.stringify(DEFAULT_SHARED_HEAT));
+  sharedSubHeatData = JSON.parse(JSON.stringify(DEFAULT_SHARED_SUB_HEAT));
+  overrides = JSON.parse(JSON.stringify(DEFAULT_OVERRIDES));
   saveToStorage();
   buildTolGrid();
   buildHeatTable();

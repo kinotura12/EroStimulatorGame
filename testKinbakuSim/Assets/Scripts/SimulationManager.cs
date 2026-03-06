@@ -8,8 +8,9 @@ public class SimulationManager : MonoBehaviour
 {
     [Header("=== 参照 ===")]
     [SerializeField] InputHandler inputHandler;
-    [SerializeField] SimSharedConfig sharedConfig;  // 全状態共通の基礎係数
-    [SerializeField] SimStateConfig[] stateConfigs; // enum順に7つ設定
+    [SerializeField] SimSharedConfig sharedConfig;          // 全状態共通の基礎係数
+    [SerializeField] SimStateConfig[] stateConfigs;         // enum順に7つ設定
+    [SerializeField] StateTransitionConfig transitionConfig; // 遷移ルール定義
 
     [Header("=== OutputDriver係数 ===")]
     [SerializeField] OutputDriver.OutputWeights outputWeights = new OutputDriver.OutputWeights();
@@ -35,6 +36,7 @@ public class SimulationManager : MonoBehaviour
     float aboveDuration;
     float belowDuration;
     float withinDuration;
+    float stopDuration;
     float driveRampTimer;
 
     InputBand currentBand;
@@ -118,6 +120,7 @@ public class SimulationManager : MonoBehaviour
             ref aboveDuration,
             ref belowDuration,
             ref withinDuration,
+            ref stopDuration,
             ref driveRampTimer);
 
         // 3. 射精判定（エンド状態でも継続）
@@ -135,7 +138,8 @@ public class SimulationManager : MonoBehaviour
             SimState previousState = currentState;
             SimState nextState = stateResolver.Resolve(
                 currentState, param, currentBand, runtimeConfig,
-                aboveDuration, belowDuration, withinDuration, stateOrgasmCount);
+                aboveDuration, belowDuration, withinDuration, stopDuration,
+                stateOrgasmCount, transitionConfig);
 
             if (nextState == SimState.BrokenDown && previousState != SimState.BrokenDown)
             {
@@ -387,6 +391,7 @@ public class SimulationManager : MonoBehaviour
         aboveDuration    = 0f;
         belowDuration    = 0f;
         withinDuration   = 0f;
+        stopDuration     = 0f;
         driveRampTimer   = 0f;
         justOrgasmed     = false;
         stateOrgasmCount = 0;

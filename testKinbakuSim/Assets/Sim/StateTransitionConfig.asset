@@ -1,0 +1,220 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e2d1c0b9a87654321001234567abcd, type: 3}
+  m_Name: StateTransitionConfig
+  m_EditorClassIdentifier: Assembly-CSharp::StateTransitionConfig
+  rules:
+  - note: "\u2460\u2192\u2461 Resistance\u9ad8\uff08\u9632\u885b\u611f\u4e0a\u6607\uff09"
+    enabled: 1
+    fromState: 0
+    toState: 1
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 1
+      op: 0
+      threshold: 0.8
+  - note: "\u2460\u2192\u2461 Above\u7d99\u7d9a\uff08\u5f37\u3044\u5c71\u3067\u9632\u885b\uff09"
+    enabled: 1
+    fromState: 0
+    toState: 1
+    requiredBand: 4
+    bandDuration: 5
+    conditions: []
+  - note: "\u2460\u2192\u2464 Within\u7d99\u7d9a+Arousal\u9ad8\uff08\u99b4\u5316\u3078\uff09"
+    enabled: 1
+    fromState: 0
+    toState: 4
+    requiredBand: 3
+    bandDuration: 8
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.4
+  - note: "\u2460\u2192\u2464 Below\u7d99\u7d9a+Arousal\u9ad8\uff08\u7109\u3089\u3057\u99b4\u5316\uff09"
+    enabled: 1
+    fromState: 0
+    toState: 4
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.4
+  - note: "\u2461\u2192\u2460 Resistance\u4f4e\u4e0b\uff08\u8001\u3061\u7740\u3044\u3066\u6620\u308b\uff09"
+    enabled: 1
+    fromState: 1
+    toState: 0
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 1
+      op: 1
+      threshold: 0.4
+  - note: "\u2461\u2192\u2462 Fatigue\u9ad8+Drive\u9ad8\uff08\u75b2\u308c\u3068\u8208\u596e\u3067\u5c48\u670d\uff09"
+    enabled: 1
+    fromState: 1
+    toState: 2
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 2
+      op: 0
+      threshold: 0.9
+    - param: 3
+      op: 0
+      threshold: 0.7
+  - note: "\u2461\u2192\u2463 Stop\u7d99\u7d9a+Drive\u9ad8\uff08\u304a\u9803\u3051\uff09"
+    enabled: 1
+    fromState: 1
+    toState: 3
+    requiredBand: 1
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+  - note: "\u2461\u2192\u2463 Below\u7d99\u7d9a+Drive\u9ad8\uff08\u304a\u9803\u3051\uff09"
+    enabled: 1
+    fromState: 1
+    toState: 3
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+  - note: "\u2462\u2192\u2461 Arousal\u4f4e+Fatigue\u4f4e\uff08\u843d\u3061\u7740\u3044\u3066\u9632\u885b\u3078\uff09"
+    enabled: 1
+    fromState: 2
+    toState: 1
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 0
+      op: 1
+      threshold: 0.35
+    - param: 2
+      op: 1
+      threshold: 0.9
+  - note: "\u2462\u2192\u2464 Arousal\u9ad8+Fatigue\u4f4e\uff08\u6c17\u6301\u3061\u3088\u304f\u306a\u3063\u3066\u53d7\u3051\u5165\u308c\u30e2\u30fc\u30c9\uff09"
+    enabled: 1
+    fromState: 2
+    toState: 4
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.4
+    - param: 2
+      op: 1
+      threshold: 0.9
+  - note: "\u2462\u2192\u2463 Below\u7d99\u7d9a+Drive\u9ad8\uff08\u8208\u596e\u3057\u3066\u308b\u306e\u306b\u306c\u308b\u3044\u5c71\u3067\u304a\u9803\u3051\uff09"
+    enabled: 1
+    fromState: 2
+    toState: 3
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+  - note: "\u2463\u2192\u2464 Fatigue\u9ad8\uff08\u75b2\u52b4\u3057\u3066\u53d7\u3051\u5165\u308c\u30e2\u30fc\u30c9\u3078\uff09"
+    enabled: 1
+    fromState: 3
+    toState: 4
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 2
+      op: 0
+      threshold: 0.7
+  - note: "\u2463\u2192\u2465 Below\u7d99\u7d9a+Drive\u9ad8\uff08\u512a\u3057\u3044\u5c71\u3067\u964d\u53c2 1/2\uff09"
+    enabled: 1
+    fromState: 3
+    toState: 5
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+  - note: "\u2463\u2192\u2465 Below\u7d99\u7d9a+Arousal\u9ad8\uff08\u512a\u3057\u3044\u5c71\u3067\u964d\u53c2 2/2\uff09"
+    enabled: 1
+    fromState: 3
+    toState: 5
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.65
+  - note: "\u2463\u2192\u2464 Resistance\u4f4e+Arousal\u9ad8\uff08\u9632\u885b\u3068\u3051\u3066\u99b4\u5316\u3078\uff09"
+    enabled: 1
+    fromState: 3
+    toState: 4
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 1
+      op: 1
+      threshold: 0.4
+    - param: 0
+      op: 0
+      threshold: 0.4
+  - note: "\u2464\u2192\u2465 Within\u7d99\u7d9a+Arousal\u9ad8\uff08\u964d\u53c2\uff09"
+    enabled: 1
+    fromState: 4
+    toState: 5
+    requiredBand: 3
+    bandDuration: 8
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.65
+  - note: "\u2464\u2192\u2465 Below\u7d99\u7d9a+Arousal\u9ad8\uff08\u7109\u3089\u3057\u964d\u53c2\uff09"
+    enabled: 1
+    fromState: 4
+    toState: 5
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 0
+      op: 0
+      threshold: 0.65
+  - note: "\u2464\u2192\u2466 Above\u7d99\u7d9a+Drive\u9ad8+Arousal\u9ad8\uff08\u7406\u6027\u5d29\u58ca\uff09"
+    enabled: 1
+    fromState: 4
+    toState: 6
+    requiredBand: 4
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+    - param: 0
+      op: 0
+      threshold: 0.6
+  - note: "\u2465\u2192\u2466 Below\u7d99\u7d9a+Drive\u9ad8+Arousal\u9ad8\uff08\u7406\u6027\u5d29\u58ca\uff09"
+    enabled: 1
+    fromState: 5
+    toState: 6
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.7
+    - param: 0
+      op: 0
+      threshold: 0.6

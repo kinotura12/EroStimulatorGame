@@ -18,13 +18,14 @@ public class ParameterUpdater
         ref float        aboveDuration,
         ref float        belowDuration,
         ref float        withinDuration,
+        ref float        stopDuration,
         ref float        driveRampTimer)
     {
         switch (band)
         {
             case InputBand.Stop:
                 UpdateStop(param, config, deltaTime);
-                // タイマーリセット
+                stopDuration  += deltaTime;
                 aboveDuration  = 0f;
                 belowDuration  = 0f;
                 withinDuration = 0f;
@@ -33,6 +34,7 @@ public class ParameterUpdater
 
             case InputBand.Below:
                 UpdateBelow(param, config, deltaTime, ref driveRampTimer);
+                stopDuration   = 0f;
                 aboveDuration  = 0f;
                 withinDuration = 0f;
                 belowDuration += deltaTime;
@@ -40,6 +42,7 @@ public class ParameterUpdater
 
             case InputBand.Within:
                 UpdateWithin(param, config, deltaTime);
+                stopDuration   = 0f;
                 aboveDuration  = 0f;
                 belowDuration  = 0f;
                 driveRampTimer = 0f;
@@ -48,6 +51,7 @@ public class ParameterUpdater
 
             case InputBand.Above:
                 UpdateAbove(param, config, deltaTime, ref driveRampTimer);
+                stopDuration   = 0f;
                 belowDuration  = 0f;
                 withinDuration = 0f;
                 aboveDuration += deltaTime;

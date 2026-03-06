@@ -177,12 +177,11 @@
     stroke-width: 1.5;
     fill: none;
     transition: stroke 0.15s;
-    marker-end: url(#arrowhead);
+    stroke-linecap: round;
   }
   .arrow-line.highlighted {
     stroke: var(--accent);
     stroke-width: 2;
-    marker-end: url(#arrowhead-accent);
   }
 
   /* サイドパネル */
@@ -348,11 +347,11 @@
     <div id="canvas-inner">
       <svg id="arrows">
         <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#2a2a3a"/>
+          <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+            <polygon points="0 0, 6 2, 0 4" fill="#6e7a94"/>
           </marker>
-          <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#c084fc"/>
+          <marker id="arrowhead-accent" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+            <polygon points="0 0, 6 2, 0 4" fill="#c084fc"/>
           </marker>
         </defs>
       </svg>
@@ -379,7 +378,7 @@
 const STATES = {
   Guarded: {
     id: "Guarded", num: "①", name: "Guarded", desc: "心を閉ざしニヤッとしている",
-    x: 600, y: 120,
+    x: 180, y: 180,
     tolLow: 0.35, tolHigh: 0.65,
     detail: "拘束されて冷や汗をかきながらも、心を閉ざしてニヤッとしている。初期状態。",
     transitions: [
@@ -391,7 +390,7 @@ const STATES = {
   },
   Defensive: {
     id: "Defensive", num: "②", name: "Defensive", desc: "不機嫌・防衛モード",
-    x: 280, y: 380,
+    x: 520, y: 180,
     tolLow: 0.55, tolHigh: 0.85,
     detail: "乱暴に扱われて心を閉ざした不機嫌状態。",
     transitions: [
@@ -403,7 +402,7 @@ const STATES = {
   },
   Overridden: {
     id: "Overridden", num: "③", name: "Overridden", desc: "強い快感で押し切られて射精",
-    x: 920, y: 380,
+    x: 860, y: 180,
     tolLow: 0.30, tolHigh: 0.70,
     detail: "強い快感で押し切られて射精する。Fatigue蓄積・DriveBias+方向。",
     transitions: [
@@ -415,7 +414,7 @@ const STATES = {
   },
   FrustratedCraving: {
     id: "FrustratedCraving", num: "④", name: "FrustratedCraving", desc: "困惑・お預け状態",
-    x: 580, y: 640,
+    x: 520, y: 500,
     tolLow: 0.25, tolHigh: 0.55,
     detail: "強い刺激の後に急に弱くなり、精神は閉ざしているのに体が求めてしまう困惑状態。",
     transitions: [
@@ -427,7 +426,7 @@ const STATES = {
   },
   Acclimating: {
     id: "Acclimating", num: "⑤", name: "Acclimating", desc: "馴化・快楽受け入れ",
-    x: 920, y: 640,
+    x: 860, y: 500,
     tolLow: 0.30, tolHigh: 0.70,
     detail: "心理的ガードが下がり、身体が快楽を受け入れていく状態。",
     transitions: [
@@ -438,7 +437,7 @@ const STATES = {
   },
   Surrendered: {
     id: "Surrendered", num: "⑥", name: "Surrendered", desc: "通常快楽落ち",
-    x: 600, y: 900,
+    x: 960, y: 740,
     tolLow: 0.20, tolHigh: 0.80,
     detail: "許容値が広くなり、なんでも気持ちよくなる状態。",
     transitions: [
@@ -448,7 +447,7 @@ const STATES = {
   },
   BrokenDown: {
     id: "BrokenDown", num: "⑦", name: "BrokenDown", desc: "理性崩壊・サービスタイム",
-    x: 920, y: 1100,
+    x: 1080, y: 940,
     tolLow: 0.05, tolHigh: 0.95,
     detail: "理性が完全に崩壊し、弱い刺激でも強い刺激でもイってしまう状態。突入時にDriveBias符号変換。FatigueMultiplier=2.0。",
     transitions: [
@@ -456,10 +455,10 @@ const STATES = {
       { to: "End_CO", label: "→END_C_Overload", cond: "射精 ≥ 3回 + Fatigue ≥ 0.9 + アヘ顔", tags: [["end","3回射精"],["param","Fatigue↑"],["param","DriveBias+"]] },
     ]
   },
-  End_A: { id:"End_A", num:"END", name:"End_A", desc:"潮吹きグッタリ", x:280, y:700, isEnd:true, detail:"③突入後2回以上射精 + Fatigue閾値以上。\n潮吹きグッタリスチル。", transitions:[] },
-  End_B: { id:"End_B", num:"END", name:"End_B", desc:"快楽落ち", x:280, y:920, isEnd:true, detail:"⑥突入後2回以上射精 + Fatigue閾値以上。\n快楽落ちスチル。", transitions:[] },
-  End_CW: { id:"End_CW", num:"END", name:"End_C_White", desc:"とろけ落ち", x:600, y:1200, isEnd:true, detail:"⑦突入後3回以上射精 + トロトロ + Fatigue閾値以上。\nとろけ落ちスチル。", transitions:[] },
-  End_CO: { id:"End_CO", num:"END", name:"End_C_Overload", desc:"アヘ顔崩壊", x:960, y:1300, isEnd:true, detail:"⑦突入後3回以上射精 + アヘ顔 + Fatigue閾値以上。\nアヘ顔崩壊スチル。", transitions:[] },
+  End_A: { id:"End_A", num:"END", name:"End_A", desc:"潮吹きグッタリ", x:1160, y:320, isEnd:true, detail:"③突入後2回以上射精 + Fatigue閾値以上。\n潮吹きグッタリスチル。", transitions:[] },
+  End_B: { id:"End_B", num:"END", name:"End_B", desc:"快楽落ち", x:1240, y:790, isEnd:true, detail:"⑥突入後2回以上射精 + Fatigue閾値以上。\n快楽落ちスチル。", transitions:[] },
+  End_CW: { id:"End_CW", num:"END", name:"End_C_White", desc:"とろけ落ち", x:980, y:1120, isEnd:true, detail:"⑦突入後3回以上射精 + トロトロ + Fatigue閾値以上。\nとろけ落ちスチル。", transitions:[] },
+  End_CO: { id:"End_CO", num:"END", name:"End_C_Overload", desc:"アヘ顔崩壊", x:1220, y:1120, isEnd:true, detail:"⑦突入後3回以上射精 + アヘ顔 + Fatigue閾値以上。\nアヘ顔崩壊スチル。", transitions:[] },
 };
 
 const NODE_W = 180, NODE_H = 72, END_W = 140, END_H = 58;
@@ -508,10 +507,15 @@ function getEdgePoint(fromId, toId) {
 
 const arrowData = [];
 let arrowIdxMap = {};
+const seenEdge = new Set();
 
 Object.values(STATES).forEach(s => {
   s.transitions.forEach((tr, ti) => {
     const from = s.id, to = tr.to;
+    const dedupeKey = `${from}__${to}__${tr.cond}`;
+    if (seenEdge.has(dedupeKey)) return;
+    seenEdge.add(dedupeKey);
+
     const key = `${from}-${to}-${ti}`;
     arrowData.push({ from, to, tr, key });
     if (!arrowIdxMap[from]) arrowIdxMap[from] = [];
@@ -543,13 +547,71 @@ arrowData.forEach(a => {
 });
 
 function drawArrows(highlightKeys = []) {
-  // clear
-  while (svg.childNodes.length > 1) svg.removeChild(svg.lastChild);
+  // clear（defsは保持する）
+  Array.from(svg.children).forEach(el => {
+    if (el.tagName.toLowerCase() !== 'defs') el.remove();
+  });
+
+  // 何らかの理由でdefsが消えていた場合のフェイルセーフ
+  if (!svg.querySelector('#arrowhead') || !svg.querySelector('#arrowhead-accent')) {
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+      <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2, 0 4" fill="#6e7a94"></polygon>
+      </marker>
+      <marker id="arrowhead-accent" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 6 2, 0 4" fill="#c084fc"></polygon>
+      </marker>`;
+    svg.prepend(defs);
+  }
+
+  // ノード背面に矢印を描くため、終点を少し手前にして矢印頭を見える位置に出す
+  const ARROW_HEAD_GAP = 6;
+
+  const manualDetourByKey = {};
+  const manualAlongByKey = {};
+
+  // ラベル重なり軽減: 同じノードから同方向へ出る矢印群で縦位置をずらす
+  const labelLaneMap = {};
+  arrowData.forEach(a => {
+    const fromC = getCenter(a.from);
+    const toC = getCenter(a.to);
+    const dx = toC.x - fromC.x;
+    const dy = toC.y - fromC.y;
+    let dir;
+    if (Math.abs(dx) > Math.abs(dy) * 1.25) {
+      dir = dx >= 0 ? 'R' : 'L';
+    } else if (Math.abs(dy) > Math.abs(dx) * 1.25) {
+      dir = dy >= 0 ? 'D' : 'U';
+    } else {
+      dir = (dx >= 0 ? 'R' : 'L') + (dy >= 0 ? 'D' : 'U');
+    }
+    const laneKey = `${a.from}_${dir}`;
+    if (!labelLaneMap[laneKey]) labelLaneMap[laneKey] = [];
+    labelLaneMap[laneKey].push(a.key);
+  });
+
+  const labelLanePos = {};
+  Object.values(labelLaneMap).forEach(keys => {
+    keys.forEach((key, idx) => {
+      labelLanePos[key] = { i: idx, n: keys.length };
+    });
+  });
 
   arrowData.forEach(a => {
     const fp = getEdgePoint(a.from, a.to);
-    const tp = getEdgePoint(a.to, a.from);
+    const tpRaw = getEdgePoint(a.to, a.from);
     const hi = highlightKeys.includes(a.key);
+
+    const vx = tpRaw.x - fp.x;
+    const vy = tpRaw.y - fp.y;
+    const vLen = Math.sqrt(vx * vx + vy * vy) || 1;
+    const ux = vx / vLen;
+    const uy = vy / vLen;
+    const tp = {
+      x: tpRaw.x - ux * ARROW_HEAD_GAP,
+      y: tpRaw.y - uy * ARROW_HEAD_GAP
+    };
 
     // オフセットカーブ
     const mx = (fp.x + tp.x) / 2;
@@ -558,18 +620,29 @@ function drawArrows(highlightKeys = []) {
     const len = Math.sqrt(dx*dx + dy*dy) || 1;
     const directedOffset = (a.pairI - (a.pairN - 1) / 2) * 28;
     const reverseOffset = a.hasReverse ? a.dirSign * 14 : 0;
-    const offset = directedOffset + reverseOffset;
-    const cx = mx - dy/len * offset;
-    const cy = my + dx/len * offset;
+
+    // ⑤→⑦ は ⑥ の背後を通りやすいので大きく迂回
+    let manualDetour = manualDetourByKey[a.key] ?? 0;
+    if (a.from === 'Acclimating' && a.to === 'BrokenDown')
+      manualDetour += -200;
+    const manualAlong = manualAlongByKey[a.key] ?? 0;
+
+    const offset = directedOffset + reverseOffset + manualDetour;
+    const cx = mx + (dx / len) * manualAlong - (dy / len) * offset;
+    const cy = my + (dy / len) * manualAlong + (dx / len) * offset;
 
     // 線
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d', `M${fp.x},${fp.y} Q${cx},${cy} ${tp.x},${tp.y}`);
     path.setAttribute('class', 'arrow-line' + (hi ? ' highlighted' : ''));
+    path.setAttribute('marker-end', hi ? 'url(#arrowhead-accent)' : 'url(#arrowhead)');
     svg.appendChild(path);
 
     // ラベル背景 + テキスト
-    const lx = cx, ly = cy;
+    const lane = labelLanePos[a.key] || { i: 0, n: 1 };
+    const laneYOffset = (lane.i - (lane.n - 1) / 2) * 14;
+    const lx = cx;
+    const ly = cy + laneYOffset;
     const label = document.createElementNS('http://www.w3.org/2000/svg','text');
     label.setAttribute('x', lx);
     label.setAttribute('y', ly);
@@ -577,9 +650,8 @@ function drawArrows(highlightKeys = []) {
     label.setAttribute('dominant-baseline','middle');
     label.setAttribute('class', 'arrow-label' + (hi ? ' highlighted' : ''));
 
-    // 短縮ラベル（矢印上は簡潔に）
-    const shortLabel = makeShortLabel(a.tr);
-    label.textContent = shortLabel;
+    // 条件は省略せず、そのまま表示
+    label.textContent = a.tr.cond;
 
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.appendChild(label);

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>パラメータ感度ダッシュボード</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+:root {
+  --bg: #f5f2ed;
+  --surface: #faf8f5;
+  --ink: #1a1816;
+  --muted: #8a8480;
+  --border: #ddd9d3;
+  --border2: #e8e4de;
+  --c-stop:  #94a3b8;
+  --c-below: #60a5fa;
+  --c-within:#34d399;
+  --c-above: #f87171;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+}
+
+header {
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.header-left { display:flex; align-items:baseline; gap:12px; }
+header h1 { font-size: 13px; font-weight: 500; letter-spacing: .1em; }
+header .subtitle { font-size: 11px; color: var(--muted); }
+
+.header-actions { display:flex; gap:8px; align-items:center; }
+
+.btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'Noto Sans JP', sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  transition: all .15s;
+}
+.btn:hover { border-color: var(--ink); color: var(--ink); }
+.btn.primary {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.btn.primary:hover { background: #333; }
+.btn.danger { color: #f87171; border-color: #f87171; }
+.btn.danger:hover { background: #f87171; color: #fff; }
+
+.save-indicator {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .04em;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.save-indicator.show { opacity: 1; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 28px;
+}
+.tab {
+  padding: 10px 18px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  user-select: none;
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--ink); }
+
+.tab-content { display: none; padding: 24px 28px 60px; }
+.tab-content.active { display: block; }
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* ─── TAB A: TolLow/TolHigh ─── */
+.legend-row { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); }
+.legend-swatch { width:24px; height:10px; border-radius:2px; }
+
+.tol-grid { display:flex; flex-direction:column; gap:14px; max-width:720px; }
+.tol-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 80px;
+  align-items: center;
+  gap: 14px;
+}
+.tol-name { font-size:12px; font-weight:500; display:flex; align-items:center; gap:7px; }
+.tol-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.tol-track { position:relative; height:22px; background:var(--border2); border-radius:4px; overflow:visible; }
+.tol-below  { position:absolute; top:0; left:0; height:100%; background:rgba(96,165,250,.28); border-radius:4px 0 0 4px; }
+.tol-within { position:absolute; top:0; height:100%; background:rgba(52,211,153,.40); }
+.tol-above  { position:absolute; top:0; height:100%; background:rgba(248,113,113,.28); border-radius:0 4px 4px 0; }
+.tol-tick { position:absolute; top:-15px; transform:translateX(-50%); font-size:9px; font-family:'DM Mono',monospace; color:var(--muted); white-space:nowrap; }
+
+/* TolスライダーUI */
+.tol-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.tol-slider-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 52px;
+  align-items: center;
+  gap: 10px;
+}
+.tol-slider-label { font-size:10px; color:var(--muted); padding-left: 15px; }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border2);
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  transition: transform .1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.tol-slider-val { font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); text-align:right; }
+
+/* ─── TAB B: ヒートマップ ─── */
+.param-selector { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; }
+.param-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  letter-spacing: .04em;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'DM Mono', monospace;
+}
+.param-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.param-btn:hover:not(.active) { border-color: var(--ink); color: var(--ink); }
+
+.heat-wrap { overflow-x: auto; max-width: 100%; }
+
+table.heat { border-collapse:collapse; font-size:11px; min-width:520px; width:100%; max-width:720px; }
+table.heat thead th {
+  padding: 8px 10px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+table.heat thead th.row-header { text-align:left; color:var(--muted); font-weight:400; width:160px; }
+table.heat tbody tr { border-bottom:1px solid var(--border2); }
+table.heat tbody tr:last-child { border-bottom:none; }
+table.heat tbody td { padding:6px 10px; text-align:center; vertical-align:middle; }
+table.heat tbody td.state-cell { text-align:left; padding-left:0; }
+
+.state-label { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+.state-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.state-label-text { font-size:11px; font-weight:500; }
+.state-label-num { font-size:10px; color:var(--muted); }
+
+/* ヒートセル */
+.cell-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.cell-val { font-size:10px; font-family:'DM Mono',monospace; min-width:40px; text-align:center; cursor:pointer; padding:2px 4px; border-radius:3px; transition:background .1s; }
+.cell-val:hover { background: var(--border2); }
+.cell-bar-bg { width:80%; height:6px; background:var(--border2); border-radius:3px; overflow:hidden; position:relative; }
+.cell-bar { position:absolute; top:0; height:100%; border-radius:3px; transition:width .2s; }
+.cell-bar-pos { left:50%; background:#34d399; }
+.cell-bar-neg { right:50%; background:#f87171; }
+
+/* インライン編集 */
+.cell-edit-input {
+  width: 52px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  text-align: center;
+  border: 1px solid var(--c-within);
+  border-radius: 3px;
+  padding: 2px 4px;
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+}
+
+/* モーダル（JSON出力） */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: min(640px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size:13px; font-weight:500; }
+.modal-body { flex:1; overflow-y:auto; padding:16px 20px; }
+.modal-footer { padding:12px 20px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+
+textarea.json-out {
+  width: 100%;
+  height: 320px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--ink);
+  resize: vertical;
+  outline: none;
+  line-height: 1.6;
+}
+
+.note {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 18px;
+  line-height: 1.8;
+  padding: 10px 14px;
+  background: var(--border2);
+  border-radius: 6px;
+  max-width: 720px;
+}
+.note code { font-family:'DM Mono',monospace; font-size:9.5px; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  z-index: 2000;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>パラメータ感度ダッシュボード</h1>
+    <span class="subtitle">値をクリックで編集 — 自動保存</span>
+  </div>
+  <div class="header-actions">
+    <span class="save-indicator" id="save-indicator">💾 保存しました</span>
+    <button class="btn" id="btn-import">JSONを読み込む</button>
+    <button class="btn primary" id="btn-export">JSONをエクスポート</button>
+    <button class="btn danger" id="btn-reset">リセット</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="tol">① 刺激帯ビジュアライザ</div>
+  <div class="tab" data-tab="heat">② パラメータ別感度マップ</div>
+  <div class="tab" data-tab="sub">③ Sub刺激感度マップ</div>
+</div>
+
+<!-- TAB A -->
+<div class="tab-content active" id="tab-tol">
+  <div class="section-label">各状態の TolLow / TolHigh — スライダーで編集可</div>
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(96,165,250,.35)"></div>Below</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(52,211,153,.45)"></div>Within</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(248,113,113,.35)"></div>Above</div>
+  </div>
+  <div id="tol-grid"></div>
+  <div class="note">スライダーを動かすと即時反映 & 自動保存されます。</div>
+</div>
+
+<!-- TAB B -->
+<div class="tab-content" id="tab-heat">
+  <div class="section-label">パラメータを選んで Stop/Below/Within/Above × 7状態の増減を確認 — 数値をクリックで編集</div>
+  <div class="param-selector" id="param-selector"></div>
+  <div class="heat-wrap">
+    <table class="heat" id="heat-table"></table>
+  </div>
+  <div class="note">数値セルをクリックすると直接編集できます。Enterで確定、Escでキャンセル。変更は自動保存されます。<br>※NeedMotion の Stop 列は <code>StopCalm</code> 値を表示（<code>StopAroused</code> は別係数で管理）。</div>
+</div>
+
+<!-- TAB C -->
+<div class="tab-content" id="tab-sub">
+  <div class="section-label">SubA / SubB / SubA+B の入力時における感度マップ（状態ごと）</div>
+  <div class="param-selector" id="sub-param-selector"></div>
+  <div class="heat-wrap">
+    <table class="heat" id="sub-heat-table"></table>
+  </div>
+  <div class="note">現状ロジックでは Sub 入力時に NeedMotion は変化しないため 0.00。将来拡張に備えて編集欄は保持しています。</div>
+</div>
+
+<!-- JSONモーダル -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">JSON エクスポート</div>
+      <button class="btn" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea class="json-out" id="json-textarea" readonly></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="btn-copy-json">クリップボードにコピー</button>
+      <button class="btn primary" id="btn-download-json">ファイルとして保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSONインポート用隠しinput -->
+<input type="file" id="file-import" accept=".json" style="display:none">
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// デフォルトデータ
+// ═══════════════════════════════════════
+const DEFAULT_STATES = [
+  { id:'Guarded',           num:'①', name:'Guarded',           color:'#3b82f6', tolLow:0.30, tolHigh:0.50 },
+  { id:'Defensive',         num:'②', name:'Defensive',         color:'#ef4444', tolLow:0.20, tolHigh:0.40 },
+  { id:'Overridden',        num:'③', name:'Overridden',        color:'#f97316', tolLow:0.30, tolHigh:0.70 },
+  { id:'FrustratedCraving', num:'④', name:'FrustratedCraving', color:'#a855f7', tolLow:0.25, tolHigh:0.55 },
+  { id:'Acclimating',       num:'⑤', name:'Acclimating',       color:'#10b981', tolLow:0.30, tolHigh:0.70 },
+  { id:'Surrendered',       num:'⑥', name:'Surrendered',       color:'#eab308', tolLow:0.20, tolHigh:0.80 },
+  { id:'BrokenDown',        num:'⑦', name:'BrokenDown',        color:'#ec4899', tolLow:0.05, tolHigh:0.95 },
+];
+
+const PARAMS = ['Arousal','Resistance','Fatigue','Drive','DriveBias','NeedMotion','FrustrationStack'];
+const BANDS  = ['Stop','Below','Within','Above'];
+const SUB_INPUTS = ['SubA','SubB','SubA+B'];
+
+const DEFAULT_HEAT = {
+  Guarded: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.03, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+  Defensive: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.03, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+  Overridden: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+  FrustratedCraving: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+  Acclimating: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.05, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.04, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.05, FrustrationStack:0.00 },
+  },
+  Surrendered: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.10, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.02,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.05,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+  BrokenDown: {
+    Stop:   { Arousal:-0.03, Resistance:-0.01, Fatigue:-0.03, Drive:-0.005, DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Below:  { Arousal:+0.02, Resistance:-0.01, Fatigue:-0.005, Drive:+0.02,  DriveBias:-0.01, NeedMotion:+0.06, FrustrationStack:0.00 },
+    Within: { Arousal:+0.08, Resistance:-0.01, Fatigue:+0.04,  Drive: 0.00,  DriveBias: 0.00, NeedMotion:-0.10, FrustrationStack:0.00 },
+    Above:  { Arousal:+0.15, Resistance:+0.02, Fatigue:+0.10,  Drive:+0.02,  DriveBias:+0.02, NeedMotion:-0.12, FrustrationStack:0.00 },
+  },
+};
+
+const DEFAULT_SUB_HEAT = {
+  Guarded: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:+0.03, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:0.00, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  Defensive: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  Overridden: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  FrustratedCraving: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  Acclimating: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  Surrendered: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+  BrokenDown: {
+    SubA:   { Arousal:+0.04, Resistance:-0.03, Fatigue:0.00, Drive:+0.02, DriveBias:+0.03, NeedMotion:0.00, FrustrationStack:0.00 },
+    SubB:   { Arousal:+0.02, Resistance:-0.01, Fatigue:0.00, Drive:+0.02, DriveBias:-0.01, NeedMotion:0.00, FrustrationStack:0.00 },
+    'SubA+B': { Arousal:+0.06, Resistance:-0.04, Fatigue:0.00, Drive:+0.04, DriveBias:-0.02, NeedMotion:0.00, FrustrationStack:0.00 },
+  },
+};
+
+const STORAGE_KEY = 'param_dashboard_v1';
+
+// ═══════════════════════════════════════
+// 状態管理
+// ═══════════════════════════════════════
+let states = JSON.parse(JSON.stringify(DEFAULT_STATES));
+let heatData = JSON.parse(JSON.stringify(DEFAULT_HEAT));
+let subHeatData = JSON.parse(JSON.stringify(DEFAULT_SUB_HEAT));
+let selectedParam = 'Arousal';
+let selectedSubParam = 'Arousal';
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+    if (parsed.states) states = parsed.states;
+    if (parsed.heatData) heatData = parsed.heatData;
+    if (parsed.subHeatData) subHeatData = parsed.subHeatData;
+  } catch(e) { console.warn('load failed', e); }
+}
+
+let saveTimer = null;
+function saveToStorage() {
+  clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ states, heatData, subHeatData }));
+        const ind = document.getElementById('save-indicator');
+      ind.classList.add('show');
+      setTimeout(() => ind.classList.remove('show'), 1800);
+    } catch(e) { console.warn('save failed', e); }
+  }, 400);
+}
+
+// ═══════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════
+// TAB A: TolGrid（スライダー付き）
+// ═══════════════════════════════════════
+function buildTolGrid() {
+  const grid = document.getElementById('tol-grid');
+  grid.innerHTML = '';
+
+  states.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'max-width:720px; margin-bottom:18px;';
+
+    // ビジュアルバー
+    const barRow = document.createElement('div');
+    barRow.style.cssText = 'display:grid; grid-template-columns:140px 1fr 80px; align-items:center; gap:14px; margin-bottom:6px;';
+
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:12px; font-weight:500; display:flex; align-items:center; gap:7px;';
+    nameEl.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0"></div>${s.num} ${s.name}`;
+
+    const track = document.createElement('div');
+    track.id = `track-${s.id}`;
+    track.className = 'tol-track';
+
+    const valEl = document.createElement('div');
+    valEl.style.cssText = 'font-size:10px; font-family:DM Mono,monospace; color:var(--muted); text-align:right;';
+    valEl.id = `tolval-${s.id}`;
+
+    barRow.append(nameEl, track, valEl);
+
+    // スライダー行
+    const slidersWrap = document.createElement('div');
+    slidersWrap.style.cssText = 'display:flex; flex-direction:column; gap:5px; padding-left:154px;';
+
+    ['Low','High'].forEach(type => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:grid; grid-template-columns:50px 1fr 42px; align-items:center; gap:8px;';
+
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:9px; color:var(--muted); letter-spacing:.06em; font-family:DM Mono,monospace;';
+      lbl.textContent = 'Tol' + type;
+
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 0; slider.max = 1; slider.step = 0.01;
+      slider.value = type === 'Low' ? s.tolLow : s.tolHigh;
+
+      const numEl = document.createElement('span');
+      numEl.style.cssText = 'font-size:10px; font-family:DM Mono,monospace; color:var(--muted); text-align:right;';
+      numEl.textContent = slider.value;
+
+      slider.addEventListener('input', () => {
+        const v = parseFloat(slider.value);
+        numEl.textContent = v.toFixed(2);
+        const st = states.find(x => x.id === s.id);
+        if (type === 'Low') {
+          st.tolLow = Math.min(v, st.tolHigh - 0.01);
+          slider.value = st.tolLow;
+          numEl.textContent = st.tolLow.toFixed(2);
+        } else {
+          st.tolHigh = Math.max(v, st.tolLow + 0.01);
+          slider.value = st.tolHigh;
+          numEl.textContent = st.tolHigh.toFixed(2);
+        }
+        updateTolBar(s.id);
+        saveToStorage();
+      });
+
+      row.append(lbl, slider, numEl);
+      slidersWrap.appendChild(row);
+    });
+
+    wrap.append(barRow, slidersWrap);
+    grid.appendChild(wrap);
+
+    updateTolBar(s.id);
+  });
+}
+
+function updateTolBar(stateId) {
+  const s = states.find(x => x.id === stateId);
+  const track = document.getElementById(`track-${stateId}`);
+  if (!track) return;
+  track.innerHTML = `
+    <div class="tol-below" style="width:${s.tolLow*100}%"></div>
+    <div class="tol-within" style="left:${s.tolLow*100}%;width:${(s.tolHigh-s.tolLow)*100}%"></div>
+    <div class="tol-above" style="left:${s.tolHigh*100}%;width:${(1-s.tolHigh)*100}%"></div>
+    <div class="tol-tick" style="left:${s.tolLow*100}%">${s.tolLow.toFixed(2)}</div>
+    <div class="tol-tick" style="left:${s.tolHigh*100}%">${s.tolHigh.toFixed(2)}</div>
+  `;
+  const valEl = document.getElementById(`tolval-${stateId}`);
+  if (valEl) valEl.textContent = `${s.tolLow.toFixed(2)} – ${s.tolHigh.toFixed(2)}`;
+}
+
+// ═══════════════════════════════════════
+// TAB B: ヒートマップ
+// ═══════════════════════════════════════
+function buildParamSelector() {
+  const sel = document.getElementById('param-selector');
+  sel.innerHTML = '';
+  PARAMS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'param-btn' + (p === selectedParam ? ' active' : '');
+    btn.textContent = p;
+    btn.addEventListener('click', () => {
+      selectedParam = p;
+      document.querySelectorAll('.param-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildHeatTable();
+    });
+    sel.appendChild(btn);
+  });
+}
+
+function buildHeatTable() {
+  const table = document.getElementById('heat-table');
+  table.innerHTML = '';
+
+  let maxAbs = 0;
+  states.forEach(s => {
+    BANDS.forEach(b => {
+      const v = Math.abs((heatData[s.id]?.[b]?.[selectedParam]) ?? 0);
+      if (v > maxAbs) maxAbs = v;
+    });
+  });
+  if (maxAbs === 0) maxAbs = 1;
+
+  // thead
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const cornerTh = document.createElement('th');
+  cornerTh.className = 'row-header';
+  cornerTh.textContent = '状態';
+  headRow.appendChild(cornerTh);
+  BANDS.forEach(band => {
+    const th = document.createElement('th');
+    const bColor = { Stop:'#94a3b8', Below:'#60a5fa', Within:'#34d399', Above:'#f87171' }[band];
+    th.innerHTML = `<span style="color:${bColor};font-weight:500">${band}</span>`;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  // tbody
+  const tbody = document.createElement('tbody');
+  states.forEach(s => {
+    const row = document.createElement('tr');
+
+    const stateTd = document.createElement('td');
+    stateTd.className = 'state-cell';
+    stateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:${s.color}"></div><span class="state-label-num">${s.num}</span><span class="state-label-text">${s.name}</span></div>`;
+    row.appendChild(stateTd);
+
+    BANDS.forEach(band => {
+      const val = (heatData[s.id]?.[band]?.[selectedParam]) ?? 0;
+      const pct = (Math.abs(val) / maxAbs) * 50;
+      const td = document.createElement('td');
+      td.appendChild(makeCell(val, pct, s.id, band, selectedParam));
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+}
+
+function buildSubParamSelector() {
+  const sel = document.getElementById('sub-param-selector');
+  sel.innerHTML = '';
+  PARAMS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'param-btn' + (p === selectedSubParam ? ' active' : '');
+    btn.textContent = p;
+    btn.addEventListener('click', () => {
+      selectedSubParam = p;
+      document.querySelectorAll('#sub-param-selector .param-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildSubHeatTable();
+    });
+    sel.appendChild(btn);
+  });
+}
+
+function buildSubHeatTable() {
+  const table = document.getElementById('sub-heat-table');
+  table.innerHTML = '';
+
+  let maxAbs = 0;
+  states.forEach(s => {
+    SUB_INPUTS.forEach(b => {
+      const v = Math.abs((subHeatData[s.id]?.[b]?.[selectedSubParam]) ?? 0);
+      if (v > maxAbs) maxAbs = v;
+    });
+  });
+  if (maxAbs === 0) maxAbs = 1;
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const cornerTh = document.createElement('th');
+  cornerTh.className = 'row-header';
+  cornerTh.textContent = '状態';
+  headRow.appendChild(cornerTh);
+
+  SUB_INPUTS.forEach(input => {
+    const th = document.createElement('th');
+    th.innerHTML = `<span style="font-weight:500">${input}</span>`;
+    headRow.appendChild(th);
+  });
+
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  states.forEach(s => {
+    const row = document.createElement('tr');
+    const stateTd = document.createElement('td');
+    stateTd.className = 'state-cell';
+    stateTd.innerHTML = `<div class="state-label"><div class="state-dot" style="background:${s.color}"></div><span class="state-label-num">${s.num}</span><span class="state-label-text">${s.name}</span></div>`;
+    row.appendChild(stateTd);
+
+    SUB_INPUTS.forEach(input => {
+      const val = (subHeatData[s.id]?.[input]?.[selectedSubParam]) ?? 0;
+      const pct = (Math.abs(val) / maxAbs) * 50;
+      const td = document.createElement('td');
+      td.appendChild(makeSubCell(val, pct, s.id, input, selectedSubParam));
+      row.appendChild(td);
+    });
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+}
+
+function makeSubCell(val, pct, stateId, inputBand, param) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cell-wrap';
+
+  const valEl = document.createElement('div');
+  valEl.className = 'cell-val';
+  const sign = val > 0 ? '+' : '';
+  valEl.textContent = sign + val.toFixed(2);
+  valEl.style.color = val > 0 ? '#34d399' : val < 0 ? '#f87171' : 'var(--muted)';
+
+  const barBg = document.createElement('div');
+  barBg.className = 'cell-bar-bg';
+  const bar = document.createElement('div');
+  bar.className = 'cell-bar ' + (val >= 0 ? 'cell-bar-pos' : 'cell-bar-neg');
+  bar.style.width = pct + '%';
+  barBg.appendChild(bar);
+
+  valEl.addEventListener('click', () => startSubEdit(valEl, bar, stateId, inputBand, param));
+  wrap.append(valEl, barBg);
+  return wrap;
+}
+
+function startSubEdit(valEl, bar, stateId, inputBand, param) {
+  const currentVal = (subHeatData[stateId]?.[inputBand]?.[param]) ?? 0;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'cell-edit-input';
+  input.value = currentVal.toFixed(2);
+  input.min = -1; input.max = 1; input.step = 0.01;
+
+  valEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    let v = parseFloat(input.value);
+    if (isNaN(v)) v = currentVal;
+    v = Math.max(-1, Math.min(1, v));
+    if (!subHeatData[stateId]) subHeatData[stateId] = {};
+    if (!subHeatData[stateId][inputBand]) subHeatData[stateId][inputBand] = {};
+    subHeatData[stateId][inputBand][param] = v;
+    saveToStorage();
+
+    const sign = v > 0 ? '+' : '';
+    valEl.textContent = sign + v.toFixed(2);
+    valEl.style.color = v > 0 ? '#34d399' : v < 0 ? '#f87171' : 'var(--muted)';
+
+    let maxAbs = 0;
+    states.forEach(s => {
+      SUB_INPUTS.forEach(b => {
+        const x = Math.abs((subHeatData[s.id]?.[b]?.[param]) ?? 0);
+        if (x > maxAbs) maxAbs = x;
+      });
+    });
+    if (maxAbs === 0) maxAbs = 1;
+    const pct = (Math.abs(v) / maxAbs) * 50;
+    bar.className = 'cell-bar ' + (v >= 0 ? 'cell-bar-pos' : 'cell-bar-neg');
+    bar.style.width = pct + '%';
+
+    input.replaceWith(valEl);
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { input.replaceWith(valEl); }
+  });
+  input.addEventListener('blur', commit);
+}
+
+function makeCell(val, pct, stateId, band, param) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cell-wrap';
+
+  const valEl = document.createElement('div');
+  valEl.className = 'cell-val';
+  const sign = val > 0 ? '+' : '';
+  valEl.textContent = sign + val.toFixed(2);
+  valEl.style.color = val > 0 ? '#34d399' : val < 0 ? '#f87171' : 'var(--muted)';
+
+  const barBg = document.createElement('div');
+  barBg.className = 'cell-bar-bg';
+  const bar = document.createElement('div');
+  bar.className = 'cell-bar ' + (val >= 0 ? 'cell-bar-pos' : 'cell-bar-neg');
+  bar.style.width = pct + '%';
+  barBg.appendChild(bar);
+
+  // クリックで編集
+  valEl.addEventListener('click', () => startEdit(valEl, barBg, bar, stateId, band, param));
+
+  wrap.append(valEl, barBg);
+  return wrap;
+}
+
+function startEdit(valEl, barBg, bar, stateId, band, param) {
+  const currentVal = (heatData[stateId]?.[band]?.[param]) ?? 0;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'cell-edit-input';
+  input.value = currentVal.toFixed(2);
+  input.min = -1; input.max = 1; input.step = 0.01;
+
+  valEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const commit = () => {
+    let v = parseFloat(input.value);
+    if (isNaN(v)) v = currentVal;
+    v = Math.max(-1, Math.min(1, v));
+    if (!heatData[stateId]) heatData[stateId] = {};
+    if (!heatData[stateId][band]) heatData[stateId][band] = {};
+    heatData[stateId][band][param] = v;
+    saveToStorage();
+
+    const sign = v > 0 ? '+' : '';
+    valEl.textContent = sign + v.toFixed(2);
+    valEl.style.color = v > 0 ? '#34d399' : v < 0 ? '#f87171' : 'var(--muted)';
+
+    // バー更新（maxAbsを再計算）
+    let maxAbs = 0;
+    states.forEach(s => { BANDS.forEach(b => { const x = Math.abs((heatData[s.id]?.[b]?.[param]) ?? 0); if (x > maxAbs) maxAbs = x; }); });
+    if (maxAbs === 0) maxAbs = 1;
+    const pct = (Math.abs(v) / maxAbs) * 50;
+    bar.className = 'cell-bar ' + (v >= 0 ? 'cell-bar-pos' : 'cell-bar-neg');
+    bar.style.width = pct + '%';
+
+    input.replaceWith(valEl);
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { input.replaceWith(valEl); }
+  });
+  input.addEventListener('blur', commit);
+}
+
+// ═══════════════════════════════════════
+// JSON エクスポート
+// ═══════════════════════════════════════
+function getExportData() {
+  return { states, heatData, subHeatData, exportedAt: new Date().toISOString() };
+}
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const json = JSON.stringify(getExportData(), null, 2);
+  document.getElementById('json-textarea').value = json;
+  document.getElementById('modal-export').classList.add('show');
+});
+
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-export').classList.remove('show');
+});
+document.getElementById('modal-export').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-export'))
+    document.getElementById('modal-export').classList.remove('show');
+});
+
+document.getElementById('btn-copy-json').addEventListener('click', () => {
+  const txt = document.getElementById('json-textarea').value;
+  navigator.clipboard.writeText(txt).then(() => showToast('クリップボードにコピーしました'));
+});
+
+document.getElementById('btn-download-json').addEventListener('click', () => {
+  const json = JSON.stringify(getExportData(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'param_dashboard_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('ダウンロードしました');
+});
+
+// ═══════════════════════════════════════
+// JSON インポート
+// ═══════════════════════════════════════
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-import').click();
+});
+
+document.getElementById('file-import').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (parsed.states) states = parsed.states;
+      if (parsed.heatData) heatData = parsed.heatData;
+      if (parsed.subHeatData) subHeatData = parsed.subHeatData;
+      saveToStorage();
+      buildTolGrid();
+      buildHeatTable();
+      buildSubHeatTable();
+      showToast('読み込みました');
+    } catch(e) {
+      showToast('JSONの読み込みに失敗しました');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ═══════════════════════════════════════
+// リセット
+// ═══════════════════════════════════════
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('すべてデフォルト値に戻しますか？')) return;
+  states = JSON.parse(JSON.stringify(DEFAULT_STATES));
+  heatData = JSON.parse(JSON.stringify(DEFAULT_HEAT));
+  subHeatData = JSON.parse(JSON.stringify(DEFAULT_SUB_HEAT));
+  saveToStorage();
+  buildTolGrid();
+  buildHeatTable();
+  buildSubHeatTable();
+  showToast('リセットしました');
+});
+
+// ═══════════════════════════════════════
+// タブ切り替え
+// ═══════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════
+// 初期化
+// ═══════════════════════════════════════
+loadFromStorage();
+buildTolGrid();
+buildParamSelector();
+buildHeatTable();
+buildSubParamSelector();
+buildSubHeatTable();
+</script>
+</body>
+</html>

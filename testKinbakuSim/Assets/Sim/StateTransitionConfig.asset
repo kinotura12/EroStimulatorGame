@@ -93,6 +93,19 @@ MonoBehaviour:
     - param: 3
       op: 0
       threshold: 0.7
+  - note: "END_A \u2462\u2192End_A \u5c04\u7cbe2\u56de+Fatigue\u9ad8\uff08\u30b0\u30c3\u30bf\u30ea\u30a8\u30f3\u30c9\uff09"
+    enabled: 1
+    fromState: 2
+    toState: 7
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 4
+      op: 0
+      threshold: 2
+    - param: 2
+      op: 0
+      threshold: 0.9
   - note: "\u2462\u2192\u2461 Arousal\u4f4e+Fatigue\u4f4e\uff08\u843d\u3061\u7740\u3044\u3066\u9632\u885b\u3078\uff09"
     enabled: 1
     fromState: 2
@@ -205,6 +218,19 @@ MonoBehaviour:
     - param: 0
       op: 0
       threshold: 0.6
+  - note: "END_B \u2465\u2192End_B \u5c04\u7cbe2\u56de+Fatigue\u9ad8\uff08\u5feb\u697d\u843d\u3061\u30a8\u30f3\u30c9\uff09"
+    enabled: 1
+    fromState: 5
+    toState: 8
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 4
+      op: 0
+      threshold: 2
+    - param: 2
+      op: 0
+      threshold: 0.9
   - note: "\u2465\u2192\u2466 Below\u7d99\u7d9a+Drive\u9ad8+Arousal\u9ad8\uff08\u7406\u6027\u5d29\u58ca\uff09"
     enabled: 1
     fromState: 5
@@ -218,3 +244,35 @@ MonoBehaviour:
     - param: 0
       op: 0
       threshold: 0.6
+  - note: "END_C_White \u2466\u2192End_C_White \u5c04\u7cbe3\u56de+Fatigue\u9ad8+\u30c8\u30ed\u30c8\u30ed\uff08\u3068\u308d\u3051\u843d\u3061\u30a8\u30f3\u30c9\uff09"
+    enabled: 1
+    fromState: 6
+    toState: 9
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 4
+      op: 0
+      threshold: 3
+    - param: 2
+      op: 0
+      threshold: 0.9
+    - param: 6
+      op: 0
+      threshold: 2
+  - note: "END_C_Overload \u2466\u2192End_C_Overload \u5c04\u7cbe3\u56de+Fatigue\u9ad8+\u30a2\u30d8\u9854\uff08\u30a2\u30d8\u9854\u5d29\u58ca\u30a8\u30f3\u30c9\uff09"
+    enabled: 1
+    fromState: 6
+    toState: 10
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 4
+      op: 0
+      threshold: 3
+    - param: 2
+      op: 0
+      threshold: 0.9
+    - param: 6
+      op: 0
+      threshold: 1

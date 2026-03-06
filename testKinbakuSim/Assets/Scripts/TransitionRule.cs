@@ -8,10 +8,13 @@ using UnityEngine;
 /// <summary>パラメータ閾値条件のパラメータ種類</summary>
 public enum ConditionParam
 {
-    Arousal,    // 0
-    Resistance, // 1
-    Fatigue,    // 2
-    Drive,      // 3
+    Arousal,        // 0  (0〜1)
+    Resistance,     // 1  (0〜1)
+    Fatigue,        // 2  (0〜1)
+    Drive,          // 3  (0〜1)
+    OrgasmCount,    // 4  現在の状態での射精回数（1, 2, 3…）
+    DriveBias,      // 5  (-1〜1)
+    BrokenDownMode, // 6  0=None, 1=アヘ顔, 2=トロトロ
 }
 
 /// <summary>比較演算子</summary>
@@ -39,8 +42,7 @@ public class TransitionCondition
 {
     public ConditionParam param     = ConditionParam.Arousal;
     public CompareOp      op        = CompareOp.GreaterEqual;
-    [Range(0f, 1f)]
-    public float          threshold = 0.5f;
+    public float          threshold = 0.5f;  // OrgasmCountは整数値(1,2,3)で入力
 }
 
 /// <summary>1本の遷移ルール</summary>

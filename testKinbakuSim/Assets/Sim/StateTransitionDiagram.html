@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>状態遷移図 — KinbakuSim</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-top: #0b1220;
+      --bg-bottom: #111a2e;
+      --text-main: #e8eefc;
+      --text-sub: #c5d2ee;
+      --accent: #90caf9;
+      --card-bg: #101b30;
+      --card-border: #2a3e64;
+      --rules-bg: #0f1a2d;
+      --rules-head: #1a2a45;
+      --rules-row: #16223a;
+      --table-border: #243555;
+    }
+
+    body {
+      background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      color: var(--text-main);
+      font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-size: 1.7em;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 0.82em;
+      color: var(--text-sub);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px 20px;
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.4);
+      overflow-x: auto;
+    }
+
+    .mermaid svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .mermaid .edgeLabel {
+      color: #e6efff !important;
+    }
+    .mermaid .label text,
+    .mermaid .edgeLabel text {
+      fill: #e6efff !important;
+    }
+    .mermaid .node rect,
+    .mermaid .node polygon,
+    .mermaid .node circle {
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
+    }
+
+    /* 凡例 */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 28px;
+      justify-content: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82em;
+      color: var(--text-sub);
+    }
+    .legend-dot {
+      width: 22px;
+      height: 16px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* 遷移条件テーブル */
+    .rules-card {
+      background: var(--rules-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 1100px;
+      margin: 24px auto 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .rules-card h2 {
+      font-size: 1em;
+      color: var(--accent);
+      margin-bottom: 14px;
+      letter-spacing: 0.04em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78em;
+    }
+    th {
+      background: var(--rules-head);
+      color: #b9dcff;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--table-border);
+      color: var(--text-main);
+      vertical-align: top;
+    }
+    tr:hover td { background: var(--rules-row); }
+    .tag-end { color: #ff7675; font-weight: bold; }
+    .state-chip {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 20px;
+      font-size: 0.88em;
+      white-space: nowrap;
+    }
+    .chip-g  { background:#1a4a2e; color:#69db7c; }
+    .chip-d  { background:#3a1a2e; color:#f783ac; }
+    .chip-o  { background:#3a2a1a; color:#ffa94d; }
+    .chip-f  { background:#2a1a3a; color:#cc5de8; }
+    .chip-a  { background:#1a2a3a; color:#74c0fc; }
+    .chip-s  { background:#1a3a3a; color:#63e6be; }
+    .chip-b  { background:#3a3a1a; color:#ffe066; }
+    .chip-end{ background:#3a1a1a; color:#ff6b6b; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>状態遷移図</h1>
+  <p>StateTransitionConfig.asset &nbsp;|&nbsp; 全23ルール &nbsp;|&nbsp; ※インターネット接続が必要です</p>
+</header>
+
+<!-- 図 -->
+<div class="card">
+  <div class="mermaid">
+flowchart TD
+    G["① Guarded\n心を閉ざして冷や汗"]
+    D["② Defensive\n不機嫌・拒絶"]
+    O["③ Overridden\n強い快感で押し切られる"]
+    F["④ FrustratedCraving\nお預け：体だけ求める"]
+    A["⑤ Acclimating\n馴化：身体が受け入れる"]
+    S["⑥ Surrendered\n通常快楽落ち"]
+    B["⑦ BrokenDown\n理性崩壊"]
+
+    EA(["END A\nグッタリエンド"])
+    EB(["END B\n快楽落ちエンド"])
+    ECW(["END C White\nとろけ落ちエンド"])
+    ECO(["END C Overload\nアヘ顔崩壊エンド"])
+
+    G -->|"Resistance ≥ 0.8"| D
+    G -->|"Above継続 5s"| D
+    G -->|"Within継続 8s + Arousal ≥ 0.4"| A
+    G -->|"Below継続 5s + Arousal ≥ 0.4"| A
+
+    D -->|"Resistance ≤ 0.4"| G
+    D -->|"Fatigue ≥ 0.9 + Drive ≥ 0.7"| O
+    D -->|"Stop継続 5s + Drive ≥ 0.7"| F
+    D -->|"Below継続 5s + Drive ≥ 0.7"| F
+
+    O -->|"射精 ≥ 2回 + Fatigue ≥ 0.9"| EA
+    O -->|"Arousal ≤ 0.35 + Fatigue ≤ 0.9"| D
+    O -->|"Arousal ≥ 0.4 + Fatigue ≤ 0.9"| A
+    O -->|"Below継続 5s + Drive ≥ 0.7"| F
+
+    F -->|"Fatigue ≥ 0.7"| A
+    F -->|"Within継続 5s + Drive ≥ 0.7"| S
+    F -->|"Below継続 5s + Arousal ≥ 0.65"| S
+    F -->|"Resistance ≤ 0.4 + Arousal ≥ 0.4"| A
+
+    A -->|"Within継続 8s + Arousal ≥ 0.65"| S
+    A -->|"Below継続 5s + Arousal ≥ 0.65"| S
+    A -->|"Above継続 5s + Drive ≥ 0.7 + Arousal ≥ 0.6"| B
+
+    S -->|"射精 ≥ 2回 + Fatigue ≥ 0.9"| EB
+    S -->|"Below継続 5s + Drive ≥ 0.7 + Arousal ≥ 0.6"| B
+
+    B -->|"射精 ≥ 3回 + Fatigue ≥ 0.9 + トロトロ"| ECW
+    B -->|"射精 ≥ 3回 + Fatigue ≥ 0.9 + アヘ顔"| ECO
+
+    classDef st_g   fill:#1a4a2e,stroke:#69db7c,color:#d3f9d8
+    classDef st_d   fill:#3a1a2e,stroke:#f783ac,color:#ffdeeb
+    classDef st_o   fill:#3a2a1a,stroke:#ffa94d,color:#ffe8cc
+    classDef st_f   fill:#2a1a3a,stroke:#cc5de8,color:#f3d9fa
+    classDef st_a   fill:#1a2a3a,stroke:#74c0fc,color:#d0ebff
+    classDef st_s   fill:#1a3a3a,stroke:#63e6be,color:#c3fae8
+    classDef st_b   fill:#3a3a1a,stroke:#ffe066,color:#fff9db
+    classDef st_end fill:#3a1a1a,stroke:#ff6b6b,color:#ffe3e3
+
+    class G st_g
+    class D st_d
+    class O st_o
+    class F st_f
+    class A st_a
+    class S st_s
+    class B st_b
+    class EA,EB,ECW,ECO st_end
+  </div>
+</div>
+
+<!-- 凡例 -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1a4a2e;border:2px solid #69db7c"></div>① Guarded</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3a1a2e;border:2px solid #f783ac"></div>② Defensive</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3a2a1a;border:2px solid #ffa94d"></div>③ Overridden</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2a1a3a;border:2px solid #cc5de8"></div>④ FrustratedCraving</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a2a3a;border:2px solid #74c0fc"></div>⑤ Acclimating</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a3a3a;border:2px solid #63e6be"></div>⑥ Surrendered</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3a3a1a;border:2px solid #ffe066"></div>⑦ BrokenDown</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3a1a1a;border:2px solid #ff6b6b"></div>END状態</div>
+</div>
+<!-- ルール一覧テーブル -->
+<div class="rules-card">
+  <h2>遷移ルール一覧（全23本）</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>From</th><th>To</th><th>Band条件</th><th>パラメータ条件</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><span class="state-chip chip-g">① Guarded</span></td><td><span class="state-chip chip-d">② Defensive</span></td><td>問わない</td><td>Resistance ≥ 0.8</td></tr>
+      <tr><td>2</td><td><span class="state-chip chip-g">① Guarded</span></td><td><span class="state-chip chip-d">② Defensive</span></td><td>Above継続 5s</td><td>—</td></tr>
+      <tr><td>3</td><td><span class="state-chip chip-g">① Guarded</span></td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td>Within継続 8s</td><td>Arousal ≥ 0.4</td></tr>
+      <tr><td>4</td><td><span class="state-chip chip-g">① Guarded</span></td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td>Below継続 5s</td><td>Arousal ≥ 0.4</td></tr>
+      <tr><td>5</td><td><span class="state-chip chip-d">② Defensive</span></td><td><span class="state-chip chip-g">① Guarded</span></td><td>問わない</td><td>Resistance ≤ 0.4</td></tr>
+      <tr><td>6</td><td><span class="state-chip chip-d">② Defensive</span></td><td><span class="state-chip chip-o">③ Overridden</span></td><td>問わない</td><td>Fatigue ≥ 0.9 + Drive ≥ 0.7</td></tr>
+      <tr><td>7</td><td><span class="state-chip chip-d">② Defensive</span></td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td>Stop継続 5s</td><td>Drive ≥ 0.7</td></tr>
+      <tr><td>8</td><td><span class="state-chip chip-d">② Defensive</span></td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td>Below継続 5s</td><td>Drive ≥ 0.7</td></tr>
+      <tr><td>9</td><td><span class="state-chip chip-o">③ Overridden</span></td><td><span class="state-chip chip-end">END A</span></td><td>問わない</td><td class="tag-end">射精 ≥ 2回 + Fatigue ≥ 0.9</td></tr>
+      <tr><td>10</td><td><span class="state-chip chip-o">③ Overridden</span></td><td><span class="state-chip chip-d">② Defensive</span></td><td>問わない</td><td>Arousal ≤ 0.35 + Fatigue ≤ 0.9</td></tr>
+      <tr><td>11</td><td><span class="state-chip chip-o">③ Overridden</span></td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td>問わない</td><td>Arousal ≥ 0.4 + Fatigue ≤ 0.9</td></tr>
+      <tr><td>12</td><td><span class="state-chip chip-o">③ Overridden</span></td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td>Below継続 5s</td><td>Drive ≥ 0.7</td></tr>
+      <tr><td>13</td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td>問わない</td><td>Fatigue ≥ 0.7</td></tr>
+      <tr><td>14</td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td>Within継続 5s</td><td>Drive ≥ 0.7</td></tr>
+      <tr><td>15</td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td>Below継続 5s</td><td>Arousal ≥ 0.65</td></tr>
+      <tr><td>16</td><td><span class="state-chip chip-f">④ FrustratedCraving</span></td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td>問わない</td><td>Resistance ≤ 0.4 + Arousal ≥ 0.4</td></tr>
+      <tr><td>17</td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td>Within継続 8s</td><td>Arousal ≥ 0.65</td></tr>
+      <tr><td>18</td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td>Below継続 5s</td><td>Arousal ≥ 0.65</td></tr>
+      <tr><td>19</td><td><span class="state-chip chip-a">⑤ Acclimating</span></td><td><span class="state-chip chip-b">⑦ BrokenDown</span></td><td>Above継続 5s</td><td>Drive ≥ 0.7 + Arousal ≥ 0.6</td></tr>
+      <tr><td>20</td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td><span class="state-chip chip-end">END B</span></td><td>問わない</td><td class="tag-end">射精 ≥ 2回 + Fatigue ≥ 0.9</td></tr>
+      <tr><td>21</td><td><span class="state-chip chip-s">⑥ Surrendered</span></td><td><span class="state-chip chip-b">⑦ BrokenDown</span></td><td>Below継続 5s</td><td>Drive ≥ 0.7 + Arousal ≥ 0.6</td></tr>
+      <tr><td>22</td><td><span class="state-chip chip-b">⑦ BrokenDown</span></td><td><span class="state-chip chip-end">END C White</span></td><td>問わない</td><td class="tag-end">射精 ≥ 3回 + Fatigue ≥ 0.9 + 崩壊モード = トロトロ</td></tr>
+      <tr><td>23</td><td><span class="state-chip chip-b">⑦ BrokenDown</span></td><td><span class="state-chip chip-end">END C Overload</span></td><td>問わない</td><td class="tag-end">射精 ≥ 3回 + Fatigue ≥ 0.9 + 崩壊モード = アヘ顔</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: 'transparent',
+      primaryColor: '#213b60',
+      primaryTextColor: '#e9f3ff',
+      primaryBorderColor: '#71b7ff',
+      lineColor: '#8fa8cc',
+      edgeLabelBackground: '#1c2c49',
+      textColor: '#e6efff',
+      fontSize: '14px',
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'stepAfter',
+      padding: 20,
+      nodeSpacing: 90,
+      rankSpacing: 115,
+    }
+  });
+</script>
+
+</body>
+</html>

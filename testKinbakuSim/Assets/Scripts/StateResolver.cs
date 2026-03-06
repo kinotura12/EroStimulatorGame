@@ -1,7 +1,6 @@
 // StateResolver.cs
 // 状態遷移判定ロジック
-// 基本遷移はデータ駆動（StateTransitionConfig）
-// End判定・突入時特殊処理はコードに残す
+// 全遷移はデータ駆動（StateTransitionConfig）
 
 public class StateResolver
 {
@@ -19,49 +18,19 @@ public class StateResolver
     {
         if (IsEndState(currentState)) return currentState;
 
-        // 1. End条件（コード固定 ― 射精カウントを伴う特殊判定）
-        SimState endResult = CheckEndConditions(currentState, param, config, orgasmCount);
-        if (endResult != currentState) return endResult;
-
-        // 2. データ駆動ルール（上から順、最初にマッチしたものを適用）
+        // データ駆動ルール（上から順、最初にマッチしたものを適用）
         if (transitionConfig != null)
         {
             foreach (var rule in transitionConfig.rules)
             {
                 if (!rule.enabled) continue;
                 if (rule.fromState != currentState) continue;
-                if (EvaluateRule(rule, param, band, aboveDuration, belowDuration, withinDuration, stopDuration))
+                if (EvaluateRule(rule, param, band, aboveDuration, belowDuration, withinDuration, stopDuration, orgasmCount))
                     return rule.toState;
             }
         }
 
         return currentState;
-    }
-
-    // --- End条件（コード側に残す） ---
-
-    SimState CheckEndConditions(SimState state, SimParameters p, SimResolvedConfig c, int orgasmCount)
-    {
-        switch (state)
-        {
-            case SimState.Overridden:
-                if (orgasmCount >= c.EndAOrgasmCount && p.Fatigue >= c.TransitionFatigueThreshold)
-                    return SimState.End_A;
-                break;
-
-            case SimState.Surrendered:
-                if (orgasmCount >= c.EndBOrgasmCount && p.Fatigue >= c.TransitionFatigueThreshold)
-                    return SimState.End_B;
-                break;
-
-            case SimState.BrokenDown:
-                if (orgasmCount >= c.EndCOrgasmCount && p.Fatigue >= c.TransitionFatigueThreshold)
-                    return p.BrokenDownMode == BrokenDownMode.Ahegao
-                        ? SimState.End_C_Overload
-                        : SimState.End_C_White;
-                break;
-        }
-        return state;
     }
 
     // --- ルール評価 ---
@@ -70,7 +39,8 @@ public class StateResolver
         TransitionRule rule,
         SimParameters  param,
         InputBand      band,
-        float aboveDuration, float belowDuration, float withinDuration, float stopDuration)
+        float aboveDuration, float belowDuration, float withinDuration, float stopDuration,
+        int orgasmCount)
     {
         // Band継続条件チェック
         if (rule.requiredBand != BandRequirement.Any)
@@ -86,22 +56,25 @@ public class StateResolver
         {
             foreach (var cond in rule.conditions)
             {
-                if (!EvaluateCondition(cond, param)) return false;
+                if (!EvaluateCondition(cond, param, orgasmCount)) return false;
             }
         }
 
         return true;
     }
 
-    bool EvaluateCondition(TransitionCondition cond, SimParameters p)
+    bool EvaluateCondition(TransitionCondition cond, SimParameters p, int orgasmCount)
     {
         float value = cond.param switch
         {
-            ConditionParam.Arousal    => p.Arousal,
-            ConditionParam.Resistance => p.Resistance,
-            ConditionParam.Fatigue    => p.Fatigue,
-            ConditionParam.Drive      => p.Drive,
-            _                         => 0f,
+            ConditionParam.Arousal       => p.Arousal,
+            ConditionParam.Resistance    => p.Resistance,
+            ConditionParam.Fatigue       => p.Fatigue,
+            ConditionParam.Drive         => p.Drive,
+            ConditionParam.OrgasmCount   => (float)orgasmCount,
+            ConditionParam.DriveBias     => p.DriveBias,
+            ConditionParam.BrokenDownMode => (float)p.BrokenDownMode,
+            _                            => 0f,
         };
 
         return cond.op switch

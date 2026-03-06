@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反応シミュレーション ステートマシン図</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Mono+Lisa&display=swap');
+
+  :root {
+    --bg: #0d0d12;
+    --surface: #15151f;
+    --border: #2a2a3a;
+    --text: #e8e6f0;
+    --muted: #7a7890;
+    --accent: #c084fc;
+    --accent2: #f472b6;
+    --gold: #fbbf24;
+    --green: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ヘッダー */
+  header {
+    padding: 24px 32px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    background: var(--surface);
+  }
+  header h1 {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  header span {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* メインレイアウト */
+  .layout {
+    display: flex;
+    height: calc(100vh - 57px);
+  }
+
+  /* キャンバスエリア */
+  .canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+  }
+  .canvas-area:active { cursor: grabbing; }
+
+  #canvas-inner {
+    position: absolute;
+    width: 2400px;
+    height: 1600px;
+    transform-origin: 0 0;
+  }
+
+  svg#arrows {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* ノード */
+  .node {
+    position: absolute;
+    width: 180px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    user-select: none;
+  }
+  .node:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 24px rgba(192, 132, 252, 0.2);
+    transform: translateY(-2px);
+    z-index: 10;
+  }
+  .node.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 32px rgba(192, 132, 252, 0.35);
+    z-index: 20;
+  }
+
+  .node-head {
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+  }
+  .node-num {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .node-name {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .node-body {
+    padding: 8px 12px 10px;
+  }
+  .node-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* 状態ごとの色 */
+  .node[data-id="Guarded"] .node-head { border-top: 3px solid #60a5fa; border-radius: 10px 10px 0 0; }
+  .node[data-id="Defensive"] .node-head { border-top: 3px solid #f87171; }
+  .node[data-id="Overridden"] .node-head { border-top: 3px solid #fb923c; }
+  .node[data-id="FrustratedCraving"] .node-head { border-top: 3px solid #a78bfa; }
+  .node[data-id="Acclimating"] .node-head { border-top: 3px solid #34d399; }
+  .node[data-id="Surrendered"] .node-head { border-top: 3px solid #fbbf24; }
+  .node[data-id="BrokenDown"] .node-head { border-top: 3px solid #f472b6; }
+  .node[data-id="End_A"] .node-head, .node[data-id="End_B"] .node-head, .node[data-id="End_CW"] .node-head, .node[data-id="End_CO"] .node-head { border-top: 3px solid #6b7280; }
+
+  /* エンドノード */
+  .node.end-node {
+    width: 140px;
+    opacity: 0.75;
+  }
+  .node.end-node .node-name { font-size: 11px; }
+
+  /* 矢印ラベル */
+  .arrow-label {
+    font-size: 11px;
+    fill: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    pointer-events: all;
+    cursor: pointer;
+    transition: fill 0.15s;
+  }
+  .arrow-label:hover { fill: var(--text); }
+  .arrow-label.highlighted { fill: var(--accent); }
+  .arrow-label-bg {
+    fill: rgba(13, 13, 18, 0.92);
+    stroke: rgba(122, 120, 144, 0.35);
+    stroke-width: 0.8;
+    rx: 4;
+    ry: 4;
+    pointer-events: none;
+  }
+  .arrow-label-bg.highlighted {
+    stroke: rgba(192, 132, 252, 0.75);
+  }
+
+  .arrow-line {
+    stroke: #4a4961;
+    stroke-width: 1.5;
+    fill: none;
+    transition: stroke 0.15s;
+    marker-end: url(#arrowhead);
+  }
+  .arrow-line.highlighted {
+    stroke: var(--accent);
+    stroke-width: 2;
+    marker-end: url(#arrowhead-accent);
+  }
+
+  /* サイドパネル */
+  .side-panel {
+    width: 320px;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+  .panel-content::-webkit-scrollbar { width: 4px; }
+  .panel-content::-webkit-scrollbar-track { background: transparent; }
+  .panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .panel-placeholder {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+    padding-top: 8px;
+  }
+
+  /* 状態詳細 */
+  .state-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .state-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 14px 0 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+
+  .transition-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.65;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .transition-item:hover {
+    background: rgba(192, 132, 252, 0.07);
+    border-color: rgba(192, 132, 252, 0.4);
+  }
+
+  .transition-to {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .transition-cond {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 3px;
+    margin-bottom: 2px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .tag-band { background: rgba(96,165,250,0.15); color: #93c5fd; }
+  .tag-param { background: rgba(52,211,153,0.15); color: #6ee7b7; }
+  .tag-time { background: rgba(251,191,36,0.15); color: #fcd34d; }
+  .tag-end { background: rgba(107,114,128,0.15); color: #9ca3af; }
+
+  .threshold-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .threshold-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .threshold-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .threshold-table td:first-child { color: var(--text); font-weight: 400; }
+
+  /* ズームコントロール */
+  .zoom-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+  }
+  .zoom-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .zoom-btn:hover { background: var(--border); }
+
+  .hint {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>反応シミュレーション — ステートマシン図</h1>
+  <span>★変更希望 反映済み</span>
+</header>
+
+<div class="layout">
+  <div class="canvas-area" id="canvas">
+    <div id="canvas-inner">
+      <svg id="arrows">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a2a3a"/>
+          </marker>
+          <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#c084fc"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoom-in">+</button>
+      <button class="zoom-btn" id="zoom-out">−</button>
+      <button class="zoom-btn" id="zoom-reset" style="width:auto;padding:0 10px;font-size:10px;letter-spacing:.05em;">FIT</button>
+    </div>
+    <div class="hint">ドラッグでパン　ノードをクリックで詳細</div>
+  </div>
+
+  <div class="side-panel">
+    <div class="panel-header">State Detail</div>
+    <div class="panel-content" id="panel-content">
+      <p class="panel-placeholder">ノードをクリックすると<br>状態の詳細と遷移条件が<br>表示されます。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── データ定義 ───────────────────────────────────────────────
+const STATES = {
+  Guarded: {
+    id: "Guarded", num: "①", name: "Guarded", desc: "心を閉ざしニヤッとしている",
+    x: 600, y: 120,
+    tolLow: 0.35, tolHigh: 0.65,
+    detail: "拘束されて冷や汗をかきながらも、心を閉ざしてニヤッとしている。初期状態。",
+    transitions: [
+      { to: "Defensive", label: "→② Defensive", cond: "Resistance ≥ 0.8", tags: [["param","Resistance↑"]] },
+      { to: "Defensive", label: "→② Defensive", cond: "Above継続 5s", tags: [["band","Above"],["time","5s"]] },
+      { to: "Acclimating", label: "→⑤ Acclimating", cond: "Within継続 8s + Arousal ≥ 0.4", tags: [["band","Within"],["time","8s"],["param","Arousal↑"]] },
+      { to: "Acclimating", label: "→⑤ Acclimating", cond: "Below継続 5s + Arousal ≥ 0.4", tags: [["band","Below"],["time","5s"],["param","Arousal↑"]] },
+    ]
+  },
+  Defensive: {
+    id: "Defensive", num: "②", name: "Defensive", desc: "不機嫌・防衛モード",
+    x: 280, y: 380,
+    tolLow: 0.55, tolHigh: 0.85,
+    detail: "乱暴に扱われて心を閉ざした不機嫌状態。",
+    transitions: [
+      { to: "Guarded", label: "→① Guarded", cond: "Resistance ≤ 0.4", tags: [["param","Resistance↓"]] },
+      { to: "Overridden", label: "→③ Overridden", cond: "Fatigue ≥ 0.9 + Drive ≥ 0.7", tags: [["param","Fatigue↑"],["param","Drive↑"]] },
+      { to: "FrustratedCraving", label: "→④ FrustratedCraving", cond: "Stop継続 5s + Drive ≥ 0.7", tags: [["band","Stop"],["time","5s"],["param","Drive↑"]] },
+      { to: "FrustratedCraving", label: "→④ FrustratedCraving", cond: "Below継続 5s + Drive ≥ 0.7", tags: [["band","Below"],["time","5s"],["param","Drive↑"]] },
+    ]
+  },
+  Overridden: {
+    id: "Overridden", num: "③", name: "Overridden", desc: "強い快感で押し切られて射精",
+    x: 920, y: 380,
+    tolLow: 0.30, tolHigh: 0.70,
+    detail: "強い快感で押し切られて射精する。Fatigue蓄積・DriveBias+方向。",
+    transitions: [
+      { to: "Defensive", label: "→② Defensive", cond: "Arousal ≤ 0.35 + Fatigue ≤ 0.9", tags: [["param","Arousal↓"],["param","Fatigue↓"]] },
+      { to: "Acclimating", label: "→⑤ Acclimating", cond: "Arousal ≥ 0.4 + Fatigue ≤ 0.9", tags: [["param","Arousal↑"],["param","Fatigue↓"]] },
+      { to: "FrustratedCraving", label: "→④ FrustratedCraving", cond: "Below継続 5s + Drive ≥ 0.7", tags: [["band","Below"],["time","5s"],["param","Drive↑"]] },
+      { to: "End_A", label: "→END_A", cond: "射精 ≥ 2回 + Fatigue ≥ 0.9", tags: [["end","2回射精"],["param","Fatigue↑"]] },
+    ]
+  },
+  FrustratedCraving: {
+    id: "FrustratedCraving", num: "④", name: "FrustratedCraving", desc: "困惑・お預け状態",
+    x: 580, y: 640,
+    tolLow: 0.25, tolHigh: 0.55,
+    detail: "強い刺激の後に急に弱くなり、精神は閉ざしているのに体が求めてしまう困惑状態。",
+    transitions: [
+      { to: "Acclimating", label: "→⑤ Acclimating", cond: "Fatigue ≥ 0.7", tags: [["param","Fatigue↑"]] },
+      { to: "Acclimating", label: "→⑤ Acclimating", cond: "Resistance ≤ 0.4 + Arousal ≥ 0.4", tags: [["param","Resistance↓"],["param","Arousal↑"]] },
+      { to: "Surrendered", label: "→⑥ Surrendered", cond: "Within継続 5s + Drive ≥ 0.7", tags: [["band","Within"],["time","5s"],["param","Drive↑"]] },
+      { to: "Surrendered", label: "→⑥ Surrendered", cond: "Below継続 5s + Arousal ≥ 0.65", tags: [["band","Below"],["time","5s"],["param","Arousal↑"]] },
+    ]
+  },
+  Acclimating: {
+    id: "Acclimating", num: "⑤", name: "Acclimating", desc: "馴化・快楽受け入れ",
+    x: 920, y: 640,
+    tolLow: 0.30, tolHigh: 0.70,
+    detail: "心理的ガードが下がり、身体が快楽を受け入れていく状態。",
+    transitions: [
+      { to: "Surrendered", label: "→⑥ Surrendered", cond: "Within継続 8s + Arousal ≥ 0.65", tags: [["band","Within"],["time","8s"],["param","Arousal↑"]] },
+      { to: "Surrendered", label: "→⑥ Surrendered", cond: "Below継続 5s + Arousal ≥ 0.65", tags: [["band","Below"],["time","5s"],["param","Arousal↑"]] },
+      { to: "BrokenDown", label: "→⑦ BrokenDown", cond: "Above継続 5s + Drive ≥ 0.7 + Arousal ≥ 0.6", tags: [["band","Above"],["time","5s"],["param","Drive↑"],["param","Arousal↑"]] },
+    ]
+  },
+  Surrendered: {
+    id: "Surrendered", num: "⑥", name: "Surrendered", desc: "通常快楽落ち",
+    x: 600, y: 900,
+    tolLow: 0.20, tolHigh: 0.80,
+    detail: "許容値が広くなり、なんでも気持ちよくなる状態。",
+    transitions: [
+      { to: "BrokenDown", label: "→⑦ BrokenDown", cond: "Below継続 5s + Drive ≥ 0.7 + Arousal ≥ 0.6", tags: [["band","Below"],["time","5s"],["param","Drive↑"],["param","Arousal↑"]] },
+      { to: "End_B", label: "→END_B", cond: "射精 ≥ 2回 + Fatigue ≥ 0.9", tags: [["end","2回射精"],["param","Fatigue↑"]] },
+    ]
+  },
+  BrokenDown: {
+    id: "BrokenDown", num: "⑦", name: "BrokenDown", desc: "理性崩壊・サービスタイム",
+    x: 920, y: 1100,
+    tolLow: 0.05, tolHigh: 0.95,
+    detail: "理性が完全に崩壊し、弱い刺激でも強い刺激でもイってしまう状態。突入時にDriveBias符号変換。FatigueMultiplier=2.0。",
+    transitions: [
+      { to: "End_CW", label: "→END_C_White", cond: "射精 ≥ 3回 + Fatigue ≥ 0.9 + トロトロ", tags: [["end","3回射精"],["param","Fatigue↑"],["param","DriveBias−"]] },
+      { to: "End_CO", label: "→END_C_Overload", cond: "射精 ≥ 3回 + Fatigue ≥ 0.9 + アヘ顔", tags: [["end","3回射精"],["param","Fatigue↑"],["param","DriveBias+"]] },
+    ]
+  },
+  End_A: { id:"End_A", num:"END", name:"End_A", desc:"潮吹きグッタリ", x:280, y:700, isEnd:true, detail:"③突入後2回以上射精 + Fatigue閾値以上。\n潮吹きグッタリスチル。", transitions:[] },
+  End_B: { id:"End_B", num:"END", name:"End_B", desc:"快楽落ち", x:280, y:920, isEnd:true, detail:"⑥突入後2回以上射精 + Fatigue閾値以上。\n快楽落ちスチル。", transitions:[] },
+  End_CW: { id:"End_CW", num:"END", name:"End_C_White", desc:"とろけ落ち", x:600, y:1200, isEnd:true, detail:"⑦突入後3回以上射精 + トロトロ + Fatigue閾値以上。\nとろけ落ちスチル。", transitions:[] },
+  End_CO: { id:"End_CO", num:"END", name:"End_C_Overload", desc:"アヘ顔崩壊", x:960, y:1300, isEnd:true, detail:"⑦突入後3回以上射精 + アヘ顔 + Fatigue閾値以上。\nアヘ顔崩壊スチル。", transitions:[] },
+};
+
+const NODE_W = 180, NODE_H = 72, END_W = 140, END_H = 58;
+
+// ─── ノード生成 ───────────────────────────────────────────────
+const inner = document.getElementById('canvas-inner');
+const svg = document.getElementById('arrows');
+
+const nodeEls = {};
+Object.values(STATES).forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'node' + (s.isEnd ? ' end-node' : '');
+  el.dataset.id = s.id;
+  el.style.left = s.x + 'px';
+  el.style.top = s.y + 'px';
+  if (!s.isEnd) el.style.width = NODE_W + 'px';
+  el.innerHTML = `
+    <div class="node-head">
+      <div class="node-num">${s.num}</div>
+      <div class="node-name">${s.name}</div>
+    </div>
+    <div class="node-body">
+      <div class="node-desc">${s.desc}</div>
+    </div>`;
+  el.addEventListener('click', () => selectState(s.id));
+  inner.appendChild(el);
+  nodeEls[s.id] = el;
+});
+
+// ─── 矢印描画 ───────────────────────────────────────────────
+function getCenter(id) {
+  const s = STATES[id];
+  const w = s.isEnd ? END_W : NODE_W;
+  const h = s.isEnd ? END_H : NODE_H;
+  return { x: s.x + w/2, y: s.y + h/2, w, h };
+}
+
+function getEdgePoint(fromId, toId) {
+  const f = getCenter(fromId), t = getCenter(toId);
+  const dx = t.x - f.x, dy = t.y - f.y;
+  const ang = Math.atan2(dy, dx);
+  const hw = f.w/2 + 4, hh = f.h/2 + 4;
+  const tx = Math.abs(Math.cos(ang)) > 0.0001 ? Math.min(Math.abs(hw / Math.cos(ang)), Math.abs(hh / Math.sin(ang))) : Math.abs(hh / Math.sin(ang));
+  return { x: f.x + Math.cos(ang)*tx, y: f.y + Math.sin(ang)*tx };
+}
+
+const arrowData = [];
+let arrowIdxMap = {};
+
+Object.values(STATES).forEach(s => {
+  s.transitions.forEach((tr, ti) => {
+    const from = s.id, to = tr.to;
+    const key = `${from}-${to}-${ti}`;
+    arrowData.push({ from, to, tr, key });
+    if (!arrowIdxMap[from]) arrowIdxMap[from] = [];
+    arrowIdxMap[from].push(key);
+  });
+});
+
+// カーブ制御用オフセット（同じfrom→to間の複数矢印をずらす）
+const pairCount = {};
+const undirMap = {};
+arrowData.forEach(a => {
+  const pk = `${a.from}_${a.to}`;
+  const uk = [a.from, a.to].sort().join('_');
+  pairCount[pk] = (pairCount[pk] || 0) + 1;
+  if (!undirMap[uk]) undirMap[uk] = { fwd: false, rev: false };
+  const first = a.from < a.to ? 'fwd' : 'rev';
+  undirMap[uk][first] = true;
+});
+const pairIdx = {};
+arrowData.forEach(a => {
+  const pk = `${a.from}_${a.to}`;
+  const uk = [a.from, a.to].sort().join('_');
+  pairIdx[pk] = (pairIdx[pk] || 0);
+  a.pairN = pairCount[pk];
+  a.pairI = pairIdx[pk]++;
+  const info = undirMap[uk];
+  a.hasReverse = info.fwd && info.rev;
+  a.dirSign = a.from < a.to ? -1 : 1;
+});
+
+function drawArrows(highlightKeys = []) {
+  // clear
+  while (svg.childNodes.length > 1) svg.removeChild(svg.lastChild);
+
+  arrowData.forEach(a => {
+    const fp = getEdgePoint(a.from, a.to);
+    const tp = getEdgePoint(a.to, a.from);
+    const hi = highlightKeys.includes(a.key);
+
+    // オフセットカーブ
+    const mx = (fp.x + tp.x) / 2;
+    const my = (fp.y + tp.y) / 2;
+    const dx = tp.x - fp.x, dy = tp.y - fp.y;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const directedOffset = (a.pairI - (a.pairN - 1) / 2) * 28;
+    const reverseOffset = a.hasReverse ? a.dirSign * 14 : 0;
+    const offset = directedOffset + reverseOffset;
+    const cx = mx - dy/len * offset;
+    const cy = my + dx/len * offset;
+
+    // 線
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${fp.x},${fp.y} Q${cx},${cy} ${tp.x},${tp.y}`);
+    path.setAttribute('class', 'arrow-line' + (hi ? ' highlighted' : ''));
+    svg.appendChild(path);
+
+    // ラベル背景 + テキスト
+    const lx = cx, ly = cy;
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x', lx);
+    label.setAttribute('y', ly);
+    label.setAttribute('text-anchor','middle');
+    label.setAttribute('dominant-baseline','middle');
+    label.setAttribute('class', 'arrow-label' + (hi ? ' highlighted' : ''));
+
+    // 短縮ラベル（矢印上は簡潔に）
+    const shortLabel = makeShortLabel(a.tr);
+    label.textContent = shortLabel;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.appendChild(label);
+    svg.appendChild(g);
+
+    const box = label.getBBox();
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('x', (box.x - 4).toString());
+    bg.setAttribute('y', (box.y - 2).toString());
+    bg.setAttribute('width', (box.width + 8).toString());
+    bg.setAttribute('height', (box.height + 4).toString());
+    bg.setAttribute('class', 'arrow-label-bg' + (hi ? ' highlighted' : ''));
+    g.insertBefore(bg, label);
+  });
+}
+
+function makeShortLabel(tr) {
+  const cond = tr.cond;
+  if (cond.includes('Resistance ≥') || cond.includes('Resistance↑')) return 'Resistance↑';
+  if (cond.includes('Resistance ≤') || cond.includes('Resistance↓')) return 'Resistance↓';
+  if (cond.includes('Fatigue ≥') && cond.includes('Drive ≥')) return 'Fatigue↑ + Drive↑';
+  if (cond.includes('Fatigue ≤') && cond.includes('Arousal ≤')) return 'Fatigue↓ + Arousal↓';
+  if (cond.includes('Fatigue ≤') && cond.includes('Arousal ≥')) return 'Fatigue↓ + Arousal↑';
+  if (cond.includes('Fatigue ≥') && !cond.includes('Drive')) return 'Fatigue↑';
+  if (cond.includes('Drive ≥') && cond.includes('Above')) return 'Drive↑ + Above t';
+  if (cond.includes('Drive ≥') && cond.includes('Below')) return 'Drive↑ + Below t';
+  if (cond.includes('Below') && cond.includes('Drive or Arousal')) return 'Below t + D/A↑';
+  if (cond.includes('Below') && cond.includes('Drive')) return 'Below t + Drive↑';
+  if (cond.includes('Below') && cond.includes('Arousal')) return 'Below t + Arousal↑';
+  if (cond.includes('Within') && cond.includes('Arousal')) return 'Within + Arousal↑';
+  if (cond.includes('Within')) return 'Within 安定';
+  if (cond.includes('Below')) return 'Below t';
+  if (cond.includes('射精') && cond.includes('Fatigue')) return tr.label.split('→')[0] + '射精+Fatigue↑';
+  if (cond.includes('DriveBias')) return cond.includes('<') ? 'DriveBias−' : 'DriveBias+';
+  return tr.cond.slice(0, 18) + '…';
+}
+
+// ─── 状態選択・パネル表示 ────────────────────────────────────
+let selectedId = null;
+
+function selectState(id) {
+  selectedId = id;
+  // ノードhighlight
+  Object.values(nodeEls).forEach(el => el.classList.remove('active'));
+  nodeEls[id].classList.add('active');
+
+  // 矢印highlight
+  const keys = (arrowIdxMap[id] || []).concat(
+    arrowData.filter(a => a.to === id).map(a => a.key)
+  );
+  drawArrows(keys);
+
+  // パネル更新
+  renderPanel(id);
+}
+
+function renderPanel(id) {
+  const s = STATES[id];
+  const panel = document.getElementById('panel-content');
+
+  const tagHTML = (tags) => tags.map(([type, label]) =>
+    `<span class="tag tag-${type}">${label}</span>`
+  ).join('');
+
+  const transHTML = s.transitions.map(tr => {
+    const toS = STATES[tr.to];
+    return `<div class="transition-item">
+      <div class="transition-to">${toS ? toS.num + ' ' + toS.name : tr.to}</div>
+      <div class="transition-cond">${tr.cond}</div>
+      <div style="margin-top:4px">${tagHTML(tr.tags)}</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:11px">遷移なし（終端状態）</div>';
+
+  const threshHTML = !s.isEnd ? `
+    <div class="section-label">Threshold</div>
+    <table class="threshold-table">
+      <tr><th>TolLow</th><th>TolHigh</th></tr>
+      <tr><td>TolLow</td><td>${s.tolLow}</td></tr>
+      <tr><td>TolHigh</td><td>${s.tolHigh}</td></tr>
+    </table>` : '';
+
+  // 自分への遷移（入ってくる矢印）
+  const incoming = arrowData.filter(a => a.to === id);
+  const inHTML = incoming.length ? incoming.map(a => {
+    const fromS = STATES[a.from];
+    return `<div style="font-size:10px;color:var(--muted);padding:3px 0;">${fromS.num} ${fromS.name} から：<br><span style="color:var(--text)">${a.tr.cond}</span></div>`;
+  }).join('') : '<div style="font-size:10px;color:var(--muted)">初期状態</div>';
+
+  panel.innerHTML = `
+    <div class="state-title">${s.num} ${s.name}</div>
+    <div class="state-subtitle">${s.detail}</div>
+    ${threshHTML}
+    <div class="section-label">Outgoing Transitions（出ていく遷移）</div>
+    ${transHTML}
+    <div class="section-label">Incoming（この状態に入ってくる経路）</div>
+    ${inHTML}
+  `;
+}
+
+// ─── パン & ズーム ─────────────────────────────────────────
+const canvasEl = document.getElementById('canvas');
+const innerEl = document.getElementById('canvas-inner');
+let scale = 0.55, tx = 40, ty = 20;
+let dragging = false, startX, startY, startTx, startTy;
+
+function applyTransform() {
+  innerEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+applyTransform();
+
+canvasEl.addEventListener('mousedown', e => {
+  if (e.target.closest('.node')) return;
+  dragging = true; startX = e.clientX; startY = e.clientY; startTx = tx; startTy = ty;
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  tx = startTx + (e.clientX - startX);
+  ty = startTy + (e.clientY - startY);
+  applyTransform();
+});
+window.addEventListener('mouseup', () => dragging = false);
+
+canvasEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.92 : 1.08;
+  const rect = canvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  tx = mx - (mx - tx) * delta;
+  ty = my - (my - ty) * delta;
+  scale = Math.max(0.2, Math.min(2.0, scale * delta));
+  applyTransform();
+}, { passive: false });
+
+document.getElementById('zoom-in').onclick = () => { scale = Math.min(2.0, scale * 1.15); applyTransform(); };
+document.getElementById('zoom-out').onclick = () => { scale = Math.max(0.2, scale * 0.87); applyTransform(); };
+document.getElementById('zoom-reset').onclick = () => { scale = 0.55; tx = 40; ty = 20; applyTransform(); };
+
+// ─── 初期描画 ────────────────────────────────────────────────
+drawArrows();
+</script>
+</body>
+</html>

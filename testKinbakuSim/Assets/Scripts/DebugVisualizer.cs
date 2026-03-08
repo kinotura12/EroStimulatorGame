@@ -262,7 +262,7 @@ public class DebugVisualizer : MonoBehaviour
             if (p.EdgeTension >= 1f)
             {
                 int filled = Mathf.Clamp(Mathf.RoundToInt(p.EdgePeakTimer / Mathf.Max(0.01f, sim.CurrentEdgePeakHoldDuration) * 2f), 0, 2);
-                peakProgress = $" [{new string('▶', filled)}{new string('_', 2 - filled)}]";
+                peakProgress = $" [{new string('>', filled)}{new string('_', 2 - filled)}]";
             }
             charaParamLabel.text =
                 $"Arousal    {Bar(p.Arousal)}  {p.Arousal:F2}\n" +
@@ -305,14 +305,14 @@ public class DebugVisualizer : MonoBehaviour
     string Bar(float value)
     {
         int filled = Mathf.RoundToInt(Mathf.Clamp01(value) * 10f);
-        return "[" + new string('█', filled) + new string('░', 10 - filled) + "]";
+        return "[" + new string('#', filled) + new string('-', 10 - filled) + "]";
     }
 
     // 小さいバー表示（0.0～1.0 を5段階で表示）
     string SmallBar(float value)
     {
         int filled = Mathf.RoundToInt(Mathf.Clamp01(value) * 5f);
-        return "[" + new string('█', filled) + new string('░', 5 - filled) + "]";
+        return "[" + new string('#', filled) + new string('-', 5 - filled) + "]";
     }
 
     // --- SubA/B インジケーター振動 ---
@@ -369,13 +369,13 @@ public class DebugVisualizer : MonoBehaviour
         value = Mathf.Clamp(value, -1f, 1f);
         int center = 5;
         int pos = Mathf.RoundToInt((value + 1f) * 5f); // 0〜10
-        char[] bar = new string('░', 11).ToCharArray();
+        char[] bar = new string('-', 11).ToCharArray();
         bar[center] = '|'; // 中央マーク
         if (pos != center)
         {
             int lo = Mathf.Min(pos, center);
             int hi = Mathf.Max(pos, center);
-            for (int i = lo; i <= hi; i++) if (bar[i] != '|') bar[i] = '█';
+            for (int i = lo; i <= hi; i++) if (bar[i] != '|') bar[i] = '=';
         }
         return "[" + new string(bar) + "]";
     }

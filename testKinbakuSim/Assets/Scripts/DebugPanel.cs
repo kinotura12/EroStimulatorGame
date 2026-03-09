@@ -1,5 +1,5 @@
 // DebugPanel.cs
-// デバッグ用：状態ジャンプボタン（DEVELOPMENT_BUILD または UNITY_EDITOR 時のみ有効）
+// デバッグ用：状態ジャンプボタン
 //
 // 【セットアップ手順】
 // 1. SimulationRoot（SimulationManager があるオブジェクト）にアタッチ
@@ -7,10 +7,10 @@
 
 using UnityEngine;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 public class DebugPanel : MonoBehaviour
 {
     [SerializeField] SimulationManager sim;
+    [SerializeField] bool showInReleaseBuild = true;
 
     // ボタンのレイアウト定数
     const float PanelX      = 10f;
@@ -36,6 +36,7 @@ public class DebugPanel : MonoBehaviour
     void OnGUI()
     {
         if (sim == null) return;
+        if (!showInReleaseBuild && !Debug.isDebugBuild) return;
 
         // スタイル初期化（初回のみ）
         if (_activeStyle == null)
@@ -71,7 +72,3 @@ public class DebugPanel : MonoBehaviour
         }
     }
 }
-#else
-// ビルド時は空クラスとして残す（参照エラー回避）
-public class DebugPanel : UnityEngine.MonoBehaviour { }
-#endif

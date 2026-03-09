@@ -8,6 +8,13 @@
 [Uu]ser[Ss]ettings/
 
 # GitHub Pages deployment for Unity Web build under Docs
+!docs/
+!docs/index.html
+!docs/Build/
+!docs/Build/**
+!docs/TemplateData/
+!docs/TemplateData/**
+!docs/.nojekyll
 !Docs/
 !Docs/プロトタイプv0.1.0/
 !Docs/プロトタイプv0.1.0/index.html

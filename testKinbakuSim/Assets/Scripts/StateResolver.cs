@@ -67,14 +67,15 @@ public class StateResolver
     {
         float value = cond.param switch
         {
-            ConditionParam.Arousal       => p.Arousal,
-            ConditionParam.Resistance    => p.Resistance,
-            ConditionParam.Fatigue       => p.Fatigue,
-            ConditionParam.Drive         => p.Drive,
-            ConditionParam.OrgasmCount   => (float)orgasmCount,
-            ConditionParam.DriveBias     => p.DriveBias,
-            ConditionParam.BrokenDownMode => (float)p.BrokenDownMode,
-            _                            => 0f,
+            ConditionParam.Arousal        => p.Arousal,
+            ConditionParam.Resistance     => p.Resistance,
+            ConditionParam.Fatigue        => p.Fatigue,
+            ConditionParam.Drive          => p.Drive,
+            ConditionParam.OrgasmCount    => (float)orgasmCount,
+            ConditionParam.DriveBias      => p.DriveBias,
+            ConditionParam.BrokenDownMode => 0f,  // 廃止済み。DriveBias条件に移行
+            ConditionParam.EdgeDwellTime  => p.EdgeDwellTime,
+            _                             => 0f,
         };
 
         return cond.op switch

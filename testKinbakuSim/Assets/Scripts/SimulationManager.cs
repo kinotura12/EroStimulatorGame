@@ -43,6 +43,7 @@ public class SimulationManager : MonoBehaviour
     float withinDuration;
     float stopDuration;
     float driveRampTimer;
+    float forceStateLockTimer;  // ForceState後の遷移評価ロック（秒）
 
     InputBand currentBand;
     bool justOrgasmed;
@@ -69,6 +70,8 @@ public class SimulationManager : MonoBehaviour
     // イベント
     public System.Action<SimState>       OnStateChanged;
     public System.Action                 OnOrgasm;
+    public System.Action                 OnFemaleOrgasm;   // DriveBias < 0 時（メスイキ）
+    public System.Action                 OnMaleOrgasm;     // DriveBias >= 0 時（オスイキ）
     public System.Action<SimState>       OnEnding;
 
     void Awake()
@@ -169,49 +172,56 @@ public class SimulationManager : MonoBehaviour
         {
             justOrgasmed = true;
             if (!isEnd) stateOrgasmCount++;
-            endJudge.OnOrgasm(param, runtimeConfig);
+            bool isFemaleOrgasm = endJudge.OnOrgasm(param, runtimeConfig);
             OnOrgasm?.Invoke();
+            if (isFemaleOrgasm)
+                OnFemaleOrgasm?.Invoke();
+            else
+                OnMaleOrgasm?.Invoke();
         }
 
         // 4. BrokenDown突入時: DriveBias変換 + モードロック（エンド状態はスキップ）
         if (!isEnd)
         {
-            SimState previousState = currentState;
-            SimState nextState = stateResolver.Resolve(
-                currentState, param, currentBand, runtimeConfig,
-                aboveDuration, belowDuration, withinDuration, stopDuration,
-                stateOrgasmCount, transitionConfig);
-
-            if (nextState == SimState.BrokenDown && previousState != SimState.BrokenDown)
+            // ForceState後のロック期間中は遷移評価をスキップ
+            if (forceStateLockTimer > 0f)
             {
-                // Below継続で突入 → DriveBiasを－方向（トロトロ）に変換
-                // Above継続で突入 → DriveBiasを＋方向（アヘ顔）に変換
-                if (currentBand == InputBand.Below)
-                    param.DriveBias = -Mathf.Abs(param.DriveBias);
-                else if (currentBand == InputBand.Above)
-                    param.DriveBias = Mathf.Abs(param.DriveBias);
-                // それ以外（⑦直行等）は現在のDriveBiasをそのまま使用
-
-                endJudge.LockBrokenDownMode(param);
+                forceStateLockTimer -= Time.deltaTime;
             }
-
-            // 5. 状態遷移
-            if (nextState != currentState)
+            else
             {
-                if (debugLogging)
-                    Debug.Log($"[State] {currentState} → {nextState} | Band:{currentBand} | Arousal:{param.Arousal:F2} | Drive:{param.Drive:F2}");
+                SimState previousState = currentState;
+                SimState nextState = stateResolver.Resolve(
+                    currentState, param, currentBand, runtimeConfig,
+                    aboveDuration, belowDuration, withinDuration, stopDuration,
+                    stateOrgasmCount, transitionConfig);
 
-                currentState = nextState;
-                stateOrgasmCount = 0;  // 状態が変わったら射精カウントをリセット
-                OnStateChanged?.Invoke(currentState);
+                if (nextState == SimState.BrokenDown && previousState != SimState.BrokenDown)
+                {
+                    // プラスモード突入時はFatigueをリセット（アヘ顔のサービスタイム確保・仕様2-3）
+                    // マイナスモード（トロトロ）はFatigueが残るため短命になりやすい（意図通り）
+                    if (param.DriveBias >= 0f)
+                        param.Fatigue *= 0.3f;
+                }
 
-                if (IsEndState(currentState))
-                    OnEnding?.Invoke(currentState);
+                // 5. 状態遷移
+                if (nextState != currentState)
+                {
+                    if (debugLogging)
+                        Debug.Log($"[State] {currentState} → {nextState} | Band:{currentBand} | Arousal:{param.Arousal:F2} | Drive:{param.Drive:F2}");
 
-                // タイマーリセット
-                aboveDuration  = 0f;
-                belowDuration  = 0f;
-                withinDuration = 0f;
+                    currentState = nextState;
+                    stateOrgasmCount = 0;  // 状態が変わったら射精カウントをリセット
+                    OnStateChanged?.Invoke(currentState);
+
+                    if (IsEndState(currentState))
+                        OnEnding?.Invoke(currentState);
+
+                    // タイマーリセット
+                    aboveDuration  = 0f;
+                    belowDuration  = 0f;
+                    withinDuration = 0f;
+                }
             }
         }
 
@@ -267,11 +277,15 @@ public class SimulationManager : MonoBehaviour
         dst.FatigueChangeAbove  = src.FatigueChangeAbove;
         dst.FatigueMultiplier   = src.FatigueMultiplier;
 
-        dst.DriveChangeStop   = src.DriveChangeStop;
-        dst.DriveChangeBelow  = src.DriveChangeBelow;
-        dst.DriveChangeWithin = src.DriveChangeWithin;
-        dst.DriveChangeAbove  = src.DriveChangeAbove;
-        dst.DriveChangeDelay  = src.DriveChangeDelay;
+        dst.DriveChangeStop          = src.DriveChangeStop;
+        dst.DriveChangeBelow         = src.DriveChangeBelow;
+        dst.DriveChangeWithin        = src.DriveChangeWithin;
+        dst.DriveChangeAbove         = src.DriveChangeAbove;
+        dst.DriveChangeDelay         = src.DriveChangeDelay;
+        dst.DriveArousalBoostFactor  = src.DriveArousalBoostFactor;
+
+        // 射精時Resistance低下：BaseDropはSharedConfig固定、CoefficientはStateConfig固定
+        dst.OrgasmResistanceDropCoefficient = src.OrgasmResistanceDropCoefficient;
 
         dst.DriveBiasShiftBelow = src.DriveBiasShiftBelow;
         dst.DriveBiasShiftAbove = src.DriveBiasShiftAbove;
@@ -327,7 +341,8 @@ public class SimulationManager : MonoBehaviour
         if (sharedConfig == null) return;
 
         // SharedConfig固定値（状態上書き不可）
-        dst.OrgasmFatigueGain           = sharedConfig.OrgasmFatigueGain;
+        dst.OrgasmFatigueGain            = sharedConfig.OrgasmFatigueGain;
+        dst.OrgasmResistanceBaseDrop     = sharedConfig.OrgasmResistanceBaseDrop;
         dst.EdgeDwellScaleMax           = sharedConfig.EdgeDwellScaleMax;
         dst.OrgasmCumulativeGain        = sharedConfig.OrgasmCumulativeGain;
         dst.OrgasmCumulativeDecayRate   = sharedConfig.OrgasmCumulativeDecayRate;
@@ -363,11 +378,12 @@ public class SimulationManager : MonoBehaviour
 
         if (!src.OverrideDrive)
         {
-            dst.DriveChangeStop   = sharedConfig.DriveChangeStop;
-            dst.DriveChangeBelow  = sharedConfig.DriveChangeBelow;
-            dst.DriveChangeWithin = sharedConfig.DriveChangeWithin;
-            dst.DriveChangeAbove  = sharedConfig.DriveChangeAbove;
-            dst.DriveChangeDelay  = sharedConfig.DriveChangeDelay;
+            dst.DriveChangeStop         = sharedConfig.DriveChangeStop;
+            dst.DriveChangeBelow        = sharedConfig.DriveChangeBelow;
+            dst.DriveChangeWithin       = sharedConfig.DriveChangeWithin;
+            dst.DriveChangeAbove        = sharedConfig.DriveChangeAbove;
+            dst.DriveChangeDelay        = sharedConfig.DriveChangeDelay;
+            dst.DriveArousalBoostFactor = sharedConfig.DriveArousalBoostFactor;
         }
 
         if (!src.OverrideDriveBias)
@@ -388,6 +404,8 @@ public class SimulationManager : MonoBehaviour
             dst.EdgeFillCurve        = sharedConfig.EdgeFillCurve;
             dst.EdgeDrainRate        = sharedConfig.EdgeDrainRate;
             dst.EdgePeakHoldDuration = sharedConfig.EdgePeakHoldDuration;
+            dst.EdgeResistanceFactor = sharedConfig.EdgeResistanceFactor;
+            dst.EdgeDriveBoostFactor = sharedConfig.EdgeDriveBoostFactor;
         }
 
         if (!src.OverrideOrgasm)
@@ -504,6 +522,40 @@ public class SimulationManager : MonoBehaviour
         }
 
         OnStateChanged?.Invoke(currentState);
+    }
+
+    // デバッグ用：強制状態遷移（パラメータ維持）
+    public void ForceState(SimState state)
+    {
+        if (IsEndState(state)) return;
+        currentState = state;
+        SimStateConfig rawConfig = GetConfig(currentState);
+        if (rawConfig != null)
+            ResolveRuntimeConfig(rawConfig, runtimeConfig);
+        aboveDuration  = 0f;
+        belowDuration  = 0f;
+        withinDuration = 0f;
+        stopDuration   = 0f;
+        stateOrgasmCount = 0;
+        forceStateLockTimer = 1.5f;  // 1.5秒間、遷移評価をロック
+        OnStateChanged?.Invoke(currentState);
+    }
+
+    // デバッグ用：強制状態遷移 + パラメータプリセット適用
+    public void ForceStateWithPreset(SimState state,
+        float arousal, float resistance, float fatigue, float drive, float driveBias)
+    {
+        param.Arousal          = Mathf.Clamp01(arousal);
+        param.Resistance       = Mathf.Clamp01(resistance);
+        param.Fatigue          = Mathf.Clamp01(fatigue);
+        param.Drive            = Mathf.Clamp01(drive);
+        param.DriveBias        = Mathf.Clamp(driveBias, -1f, 1f);
+        param.NeedMotion       = 0f;
+        param.FrustrationStack = 0f;
+        param.EdgeTension      = 0f;
+        param.EdgeDwellTime    = 0f;
+        param.EdgePeakTimer    = 0f;
+        ForceState(state);
     }
 
     // --- Unity側で手動接続が必要な作業（コメント） ---

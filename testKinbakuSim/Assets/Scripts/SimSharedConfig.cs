@@ -31,6 +31,7 @@ public class SimSharedConfig : ScriptableObject
     public float DriveChangeWithin   =  0.00f;  // 0=保持、負=減少
     public float DriveChangeAbove    =  0.02f;
     public float DriveChangeDelay    =  5.0f;   // 継続何秒後にDrive上昇開始
+    public float DriveArousalBoostFactor = 0.5f; // DriveがArousal上昇率を増幅する係数（0=無効, 1=Drive満タン時に2倍）
 
     [Header("=== DriveBias変化係数 ===")]
     public float DriveBiasShiftBelow  = -0.02f;
@@ -66,10 +67,22 @@ public class SimSharedConfig : ScriptableObject
     public float WithholdDuration      = 3.0f;  // EdgeTension が 1.0 になるまでの基準秒数（短いほど早く満タン）
     public float EdgeDecayRate         = 0.5f;  // エッジモード外での自然減衰（/秒）★状態上書き不可
     public float EdgePeakHoldDuration  = 2.0f;  // EdgeTension=1.0 を何秒維持したら射精するか
+    public float EdgeResistanceFactor  = 0.8f;  // Resistanceが射精欲蓄積を妨げる強さ（0=妨げなし、1=最大抑制）
+    public float EdgeDriveBoostFactor = 0.5f;  // Driveが射精欲蓄積を促進する強さ（0=促進なし、1=Drive分だけ倍増）
 
     [Header("=== 射精管理：射精時効果（OverrideOrgasm で状態別上書き可）===")]
-    public float OrgasmArousalResetTo = 0.25f;  // 射精後 Arousal をこの値以下にクランプ（高いと連続イキしやすい）
-    public float OrgasmFatigueGain    = 0.15f;  // 射精時 Fatigue 即時増加量
+    public float OrgasmArousalResetTo    = 0.25f;  // 射精後 Arousal をこの値以下にクランプ（高いと連続イキしやすい）
+    public float OrgasmFatigueGain       = 0.15f;  // 射精時 Fatigue 即時増加量
+    public float OrgasmResistanceBaseDrop = 0.3f;  // 射精時 Resistance 基礎低下量（状態別係数で乗算される）
+    // --- 実際の低下量: BaseDrop × OrgasmResistanceDropCoefficient (各StateConfigに設定) ---
+    // ① Guarded      coeff=1.0  → 0.30
+    // ② Defensive    coeff=1.0  → 0.30  ※Above刺激でResiが上がりやすいため係数大
+    // ③ Overridden   coeff=0.8  → 0.24
+    // ④ Frustrated   coeff=1.2  → 0.36
+    // ⑤ Acclimating  coeff=1.2  → 0.36
+    // ⑥ Surrendered  coeff=1.3  → 0.39
+    // ⑦ BrokenDown   coeff=1.3  → 0.39
+    // -----------------------------------------------------------------------
 
     [HideInInspector] public float EdgeFillCurve         = 0.5f;
     [HideInInspector] public float EdgeDrainRate         = 0.5f;
@@ -148,11 +161,12 @@ public class SimSharedConfig : ScriptableObject
         }
         if (!dst.OverrideDrive)
         {
-            dst.DriveChangeStop   = DriveChangeStop;
-            dst.DriveChangeBelow  = DriveChangeBelow;
-            dst.DriveChangeWithin = DriveChangeWithin;
-            dst.DriveChangeAbove  = DriveChangeAbove;
-            dst.DriveChangeDelay  = DriveChangeDelay;
+            dst.DriveChangeStop          = DriveChangeStop;
+            dst.DriveChangeBelow         = DriveChangeBelow;
+            dst.DriveChangeWithin        = DriveChangeWithin;
+            dst.DriveChangeAbove         = DriveChangeAbove;
+            dst.DriveChangeDelay         = DriveChangeDelay;
+            dst.DriveArousalBoostFactor  = DriveArousalBoostFactor;
         }
         if (!dst.OverrideDriveBias)
         {
@@ -175,6 +189,8 @@ public class SimSharedConfig : ScriptableObject
             dst.EdgeFillCurve        = EdgeFillCurve;
             dst.EdgeDrainRate        = EdgeDrainRate;
             dst.EdgePeakHoldDuration = EdgePeakHoldDuration;
+            dst.EdgeResistanceFactor = EdgeResistanceFactor;
+            dst.EdgeDriveBoostFactor = EdgeDriveBoostFactor;
         }
         if (!dst.OverrideTransition)
         {

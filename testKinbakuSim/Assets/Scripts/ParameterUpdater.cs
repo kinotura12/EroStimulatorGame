@@ -100,7 +100,11 @@ public class ParameterUpdater
 
     void UpdateStop(SimParameters param, SimResolvedConfig config, float dt)
     {
-        param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeStop    * dt);
+        // 上昇時のみDriveブースト（通常はArousalChangeStop < 0 なので実質無効）
+        float arousalDelta = config.ArousalChangeStop * dt;
+        if (arousalDelta > 0f)
+            arousalDelta *= 1f + param.Drive * config.DriveArousalBoostFactor;
+        param.Arousal    = Clamp01(param.Arousal    + arousalDelta);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeStop * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeStop    * dt);
         param.Drive      = Clamp01(param.Drive      + config.DriveChangeStop      * dt);
@@ -110,7 +114,11 @@ public class ParameterUpdater
 
     void UpdateBelow(SimParameters param, SimResolvedConfig config, float dt, ref float driveRampTimer)
     {
-        param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeBelow     * dt);
+        // Driveが高いほどArousal上昇率がブースト（上昇時のみ適用）
+        float arousalDelta = config.ArousalChangeBelow * dt;
+        if (arousalDelta > 0f)
+            arousalDelta *= 1f + param.Drive * config.DriveArousalBoostFactor;
+        param.Arousal    = Clamp01(param.Arousal    + arousalDelta);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeBelow  * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeBelow     * dt);
         // Below帯は常にマイナス方向へ寄せる（速度は絶対値）
@@ -121,7 +129,11 @@ public class ParameterUpdater
 
     void UpdateWithin(SimParameters param, SimResolvedConfig config, float dt)
     {
-        param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeWithin     * dt);
+        // Driveが高いほどArousal上昇率がブースト（上昇時のみ適用）
+        float arousalDelta = config.ArousalChangeWithin * dt;
+        if (arousalDelta > 0f)
+            arousalDelta *= 1f + param.Drive * config.DriveArousalBoostFactor;
+        param.Arousal    = Clamp01(param.Arousal    + arousalDelta);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeWithin  * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeWithin     * dt * config.FatigueMultiplier);
         param.Drive      = Clamp01(param.Drive      + config.DriveChangeWithin       * dt); // 0=保持
@@ -131,7 +143,11 @@ public class ParameterUpdater
 
     void UpdateAbove(SimParameters param, SimResolvedConfig config, float dt, ref float driveRampTimer)
     {
-        param.Arousal    = Clamp01(param.Arousal    + config.ArousalChangeAbove      * dt);
+        // Driveが高いほどArousal上昇率がブースト（上昇時のみ適用）
+        float arousalDelta = config.ArousalChangeAbove * dt;
+        if (arousalDelta > 0f)
+            arousalDelta *= 1f + param.Drive * config.DriveArousalBoostFactor;
+        param.Arousal    = Clamp01(param.Arousal    + arousalDelta);
         param.Resistance = Clamp01(param.Resistance + config.ResistanceChangeAbove   * dt);
         param.Fatigue    = Clamp01(param.Fatigue    + config.FatigueChangeAbove      * dt * config.FatigueMultiplier);
         // Above帯は常にプラス方向へ寄せる（速度は絶対値）

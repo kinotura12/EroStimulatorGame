@@ -52,6 +52,7 @@ public class SimStateConfig : ScriptableObject
     public float DriveChangeWithin   =  0.00f;  // 0=保持、負=減少
     public float DriveChangeAbove    =  0.02f;
     public float DriveChangeDelay    =  5.0f;   // 継続何秒後にDrive上昇開始
+    public float DriveArousalBoostFactor = 0.5f; // DriveがArousal上昇率を増幅する係数（SharedConfigから同期）
 
     [Header("=== DriveBias変化係数 ===")]
     public float DriveBiasShiftBelow  = -0.02f; // マイナス方向
@@ -101,11 +102,20 @@ public class SimStateConfig : ScriptableObject
     public float OrgasmThresholdMultiplier = 1.0f;  // 閾値の乗数（BrokenDown では 0.4 倍など）
     public float OrgasmArousalResetTo     = 0.25f;  // 射精後 Arousal をこの値以下にクランプ
 
+    [Header("=== 射精時 Resistance 低下（状態別係数）===")]
+    [Range(0f, 1f)]
+    public float OrgasmResistanceDropCoefficient = 0.3f;
+    // SharedConfig の OrgasmResistanceBaseDrop にこの係数を乗算した量だけ Resistance が低下する
+    // ① Guarded=0.3 / ② Defensive=0.1 / ③ Overridden=0.5 / ④ Frustrated=0.6
+    // ⑤ Acclimating=0.8 / ⑥ Surrendered=0.7 / ⑦ BrokenDown=0.0
+
     [Header("=== 射精管理：EdgeTension 増加・判定（OverrideEdge）===")]
     public float EdgeNeutralIntensity  = 0.2f;  // この入力強度を境に増加↑ / 減衰↓
     public float EdgeFillRate          = 1.0f;  // 増加速度の乗数
     public float WithholdDuration      = 3.0f;  // EdgeTension が 1.0 になるまでの基準秒数
     public float EdgePeakHoldDuration  = 2.0f;  // EdgeTension=1.0 を何秒維持したら射精するか
+    public float EdgeResistanceFactor  = 0.8f;  // Resistanceが射精欲蓄積を妨げる強さ（0=妨げなし、1=最大抑制）
+    public float EdgeDriveBoostFactor = 0.5f;  // Driveが射精欲蓄積を促進する強さ（0=促進なし、1=Drive分だけ倍増）
 
     [HideInInspector] public float EdgeFillCurve = 0.5f;
     [HideInInspector] public float EdgeDrainRate = 0.5f;

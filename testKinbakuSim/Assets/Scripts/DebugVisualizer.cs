@@ -73,18 +73,30 @@ public class DebugVisualizer : MonoBehaviour
     Vector2 subBBasePos;
     float   subAVibPhase;
     float   subBVibPhase;
+    bool    lastOrgasmWasFemale;
 
     void OnEnable()
     {
         if (sim != null)
-            sim.OnEnding += HandleEnding;
+        {
+            sim.OnEnding        += HandleEnding;
+            sim.OnFemaleOrgasm  += HandleFemaleOrgasm;
+            sim.OnMaleOrgasm    += HandleMaleOrgasm;
+        }
     }
 
     void OnDisable()
     {
         if (sim != null)
-            sim.OnEnding -= HandleEnding;
+        {
+            sim.OnEnding        -= HandleEnding;
+            sim.OnFemaleOrgasm  -= HandleFemaleOrgasm;
+            sim.OnMaleOrgasm    -= HandleMaleOrgasm;
+        }
     }
+
+    void HandleFemaleOrgasm() => lastOrgasmWasFemale = true;
+    void HandleMaleOrgasm()   => lastOrgasmWasFemale = false;
 
     void Start()
     {
@@ -239,11 +251,13 @@ public class DebugVisualizer : MonoBehaviour
         // なめらかに色を変える
         charaImage.color = Color.Lerp(charaImage.color, targetColor, Time.deltaTime * 3f);
 
-        // 射精フラッシュ：OrgasmScaleが高いほど白く大きく光る
+        // 射精フラッシュ：OrgasmScaleが高いほど大きく光る
+        // オスイキ=白フラッシュ、メスイキ=ピンクフラッシュ（colorBrokenを流用）
         if (o.Aftershock > 0.05f)
         {
             float flash = o.Aftershock * o.OrgasmScale;
-            charaImage.color = Color.Lerp(charaImage.color, Color.white, flash * 0.75f);
+            Color flashColor = lastOrgasmWasFemale ? colorBroken : Color.white;
+            charaImage.color = Color.Lerp(charaImage.color, flashColor, flash * 0.75f);
         }
     }
 

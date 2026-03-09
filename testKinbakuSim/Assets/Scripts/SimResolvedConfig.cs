@@ -27,6 +27,7 @@ public class SimResolvedConfig
     public float DriveChangeWithin;
     public float DriveChangeAbove;
     public float DriveChangeDelay;
+    public float DriveArousalBoostFactor;
 
     public float DriveBiasShiftBelow;
     public float DriveBiasShiftAbove;
@@ -44,6 +45,8 @@ public class SimResolvedConfig
     public float EdgeDrainRate;         // エッジモード中・中立以下での減衰速度（/秒）
     public float EdgeDwellScaleMax;     // 何秒滞在でOrgasmScale=1.0になるか（SharedConfig固定）
     public float EdgePeakHoldDuration;  // EdgeTension=1.0 を何秒維持したら射精するか
+    public float EdgeResistanceFactor;  // Resistanceが射精欲蓄積を妨げる強さ（OverrideEdgeで状態別上書き可）
+    public float EdgeDriveBoostFactor; // Driveが射精欲蓄積を促進する強さ（OverrideEdgeで状態別上書き可）
 
     public float TransitionAboveDuration;
     public float TransitionBelowDuration;
@@ -61,8 +64,10 @@ public class SimResolvedConfig
     public float FrustrationDriveThreshold;
 
     // === 射精効果（SharedConfig固定、状態上書き不可） ===
-    public float OrgasmFatigueGain;     // 射精時Fatigue即時増加量
-    public float OrgasmArousalResetTo;  // 射精後ArousalをこのMax値にクランプ
+    public float OrgasmFatigueGain;          // 射精時Fatigue即時増加量
+    public float OrgasmArousalResetTo;       // 射精後ArousalをこのMax値にクランプ
+    public float OrgasmResistanceBaseDrop;   // 射精時Resistance基礎低下量（SharedConfig固定）
+    public float OrgasmResistanceDropCoefficient; // 射精時Resistance低下の状態別係数（StateConfig固定）
 
     // === 累積オーガズム（SharedConfig固定） ===
     public float OrgasmCumulativeGain;         // 射精1回の加算量

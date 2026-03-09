@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/kinotura/.claude/projects/c--Users-kinotura-Documents-Unity-kaihatsu-00protKinbaku-v0-1-1-------/memory/**)"
+    ]
+  }
+}

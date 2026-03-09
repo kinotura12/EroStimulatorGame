@@ -21,9 +21,6 @@ public class SimParameters
     [Header("=== FrustratedCraving専用 ===")]
     [Range(0f, 1f)]  public float FrustrationStack; // お預け度合い
 
-    [Header("=== BrokenDown ===")]
-    public BrokenDownMode BrokenDownMode;            // 突入時にロックされるモード
-
     [Header("=== 射精我慢テンション ===")]
     [Range(0f, 1f)] public float EdgeTension;        // Arousal閾値超えで蓄積→最大維持で射精
     public float EdgeDwellTime;                      // エッジモード滞在秒数（射精でリセット）
@@ -42,7 +39,6 @@ public class SimParameters
         DriveBias        = 0f;
         NeedMotion       = 0f;
         FrustrationStack = 0f;
-        BrokenDownMode   = BrokenDownMode.None;
         EdgeTension      = 0f;
         EdgeDwellTime    = 0f;
         EdgePeakTimer    = 0f;

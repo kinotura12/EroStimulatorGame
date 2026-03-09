@@ -14,7 +14,8 @@ public enum ConditionParam
     Drive,          // 3  (0〜1)
     OrgasmCount,    // 4  現在の状態での射精回数（1, 2, 3…）
     DriveBias,      // 5  (-1〜1)
-    BrokenDownMode, // 6  0=None, 1=アヘ顔, 2=トロトロ
+    BrokenDownMode, // 6  0=None, 1=アヘ顔, 2=トロトロ（廃止済み）
+    EdgeDwellTime,  // 7  エッジモード累積滞在時間（秒）。射精でリセット
 }
 
 /// <summary>比較演算子</summary>

@@ -21,29 +21,20 @@ MonoBehaviour:
   ResistanceChangeWithin: -0.01
   ResistanceChangeAbove: 0.02
   FatigueChangeStop: -0.1
-  FatigueChangeBelow: -0.005
-  FatigueChangeWithin: 0.02
-  FatigueChangeAbove: 0.05
+  FatigueChangeBelow: -0.04
+  FatigueChangeWithin: 0
+  FatigueChangeAbove: 0.02
   FatigueMultiplier: 1
-  DriveChangeStop: -0.005
+  DriveChangeStop: -0.01
   DriveChangeBelow: 0.02
   DriveChangeWithin: 0
   DriveChangeAbove: 0.02
   DriveChangeDelay: 5
+  DriveArousalBoostFactor: 0.5
   DriveBiasShiftBelow: 0.01
   DriveBiasShiftAbove: 0.02
   DriveBiasDecayWithin: 0
   DriveBiasDecayStop: 0.005
-  OrgasmThreshold: 0.85
-  OrgasmThresholdMultiplier: 0.8
-  WithholdDuration: 3
-  EdgeDecayRate: 0.3
-  EdgeNeutralIntensity: 0.15
-  EdgeFillRate: 1.6
-  EdgeFillCurve: 0.5
-  EdgeDrainRate: 0.2
-  EdgeDwellScaleMax: 8
-  EdgePeakHoldDuration: 1.5
   TransitionAboveDuration: 5
   TransitionBelowDuration: 5
   TransitionWithinDuration: 8
@@ -57,8 +48,20 @@ MonoBehaviour:
   FrustrationStackGain: 0.05
   FrustrationStackThreshold: 0.6
   FrustrationDriveThreshold: 0.5
-  OrgasmFatigueGain: 0.15
+  OrgasmThreshold: 0.85
+  OrgasmThresholdMultiplier: 0.8
+  EdgeNeutralIntensity: 0.15
+  EdgeFillRate: 1.6
+  WithholdDuration: 3
+  EdgeDecayRate: 0.3
+  EdgePeakHoldDuration: 1.5
+  EdgeResistanceFactor: 0.65
   OrgasmArousalResetTo: 0.25
+  OrgasmFatigueGain: 0.15
+  OrgasmResistanceBaseDrop: 0.1
+  EdgeFillCurve: 0.5
+  EdgeDrainRate: 0.2
+  EdgeDwellScaleMax: 8
   OrgasmCumulativeGain: 0.5
   OrgasmCumulativeDecayRate: 0.01
   OrgasmCumulativeBonusScale: 0.5

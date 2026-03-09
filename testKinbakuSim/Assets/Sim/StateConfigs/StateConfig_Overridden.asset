@@ -16,7 +16,7 @@ MonoBehaviour:
   OverrideArousal: 0
   OverrideResistance: 0
   OverrideFatigue: 0
-  OverrideDrive: 1
+  OverrideDrive: 0
   OverrideDriveBias: 0
   OverrideOrgasm: 1
   OverrideTransition: 0
@@ -35,15 +35,16 @@ MonoBehaviour:
   ResistanceChangeWithin: -0.01
   ResistanceChangeAbove: 0.02
   FatigueChangeStop: -0.1
-  FatigueChangeBelow: -0.005
-  FatigueChangeWithin: 0.02
-  FatigueChangeAbove: 0.05
+  FatigueChangeBelow: -0.04
+  FatigueChangeWithin: 0
+  FatigueChangeAbove: 0.02
   FatigueMultiplier: 1
-  DriveChangeStop: -0.005
+  DriveChangeStop: -0.01
   DriveChangeBelow: 0.02
   DriveChangeWithin: 0
   DriveChangeAbove: 0.02
   DriveChangeDelay: 5
+  DriveArousalBoostFactor: 0.5
   DriveBiasShiftBelow: 0.01
   DriveBiasShiftAbove: 0.02
   DriveBiasDecayWithin: 0
@@ -79,9 +80,12 @@ MonoBehaviour:
   OrgasmThreshold: 1
   OrgasmThresholdMultiplier: 1
   OrgasmArousalResetTo: 0.7
+  OrgasmResistanceDropCoefficient: 0.8
   EdgeNeutralIntensity: 0.15
   EdgeFillRate: 1.6
   WithholdDuration: 3
   EdgePeakHoldDuration: 1.5
+  EdgeResistanceFactor: 0.65
+  EdgeDriveBoostFactor: 0.5
   EdgeFillCurve: 0.5
   EdgeDrainRate: 0.2

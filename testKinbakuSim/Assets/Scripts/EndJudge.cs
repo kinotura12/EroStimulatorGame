@@ -27,7 +27,10 @@ public class EndJudge
                 float curvedDiff     = Mathf.Pow(normalizedDiff, Mathf.Max(0.01f, config.EdgeFillCurve));  // 指数<1: 中立直上で急増、遠くなるほど緩やか
                 float fillRate       = curvedDiff * config.EdgeFillRate;
                 float duration       = Mathf.Max(0.01f, config.WithholdDuration);
-                param.EdgeTension    = Mathf.Clamp01(param.EdgeTension + fillRate / duration * dt);
+                // Resistanceが高いほど射精圧が溜まりにくい、Driveが高いほど促進（拮抗）
+                float resistanceMod  = 1f - param.Resistance * config.EdgeResistanceFactor;
+                float driveMod       = 1f + param.Drive * config.EdgeDriveBoostFactor;
+                param.EdgeTension    = Mathf.Clamp01(param.EdgeTension + fillRate / duration * resistanceMod * driveMod * dt);
             }
             else
             {
@@ -69,8 +72,8 @@ public class EndJudge
         return false;
     }
 
-    // 射精後の処理
-    public void OnOrgasm(SimParameters param, SimResolvedConfig config)
+    // 射精後の処理。戻り値：true=メスイキ、false=オスイキ
+    public bool OnOrgasm(SimParameters param, SimResolvedConfig config)
     {
         // Arousalは完全リセットせず閾値以下にクランプ（BreathDepthの大幅低下を防ぐ）
         param.Arousal = Mathf.Min(param.Arousal, config.OrgasmArousalResetTo);
@@ -78,13 +81,19 @@ public class EndJudge
         param.Fatigue = Mathf.Clamp01(param.Fatigue + config.OrgasmFatigueGain);
         // 累積オーガズム加算（OrgasmScaleが大きいほどより多く蓄積）
         param.CumulativeOrgasm = Mathf.Clamp01(param.CumulativeOrgasm + param.OrgasmScale * config.OrgasmCumulativeGain);
+
+        // 射精でResistanceを状態別係数で削る（仕様2-2）
+        float resistanceDrop = config.OrgasmResistanceBaseDrop * config.OrgasmResistanceDropCoefficient;
+        param.Resistance = Mathf.Clamp01(param.Resistance - resistanceDrop);
+
+        // メスイキ/オスイキ分岐（仕様3-4）
+        bool isFemaleOrgasm = param.DriveBias < 0f;
+        if (isFemaleOrgasm)
+            param.DriveBias = Mathf.Clamp(param.DriveBias + 0.2f, -1f, 1f);  // メスイキ：オスイキ傾向に少し近づく
+        else
+            param.DriveBias = Mathf.Clamp(param.DriveBias - 0.2f, -1f, 1f);  // オスイキ：メスイキ傾向に少し近づく
+
+        return isFemaleOrgasm;
     }
 
-    // BrokenDown突入時にDriveBiasでモードをロック
-    public void LockBrokenDownMode(SimParameters param)
-    {
-        param.BrokenDownMode = param.DriveBias >= 0f
-            ? BrokenDownMode.Ahegao
-            : BrokenDownMode.Melting;
-    }
 }

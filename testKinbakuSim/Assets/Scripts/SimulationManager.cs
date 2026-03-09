@@ -9,6 +9,35 @@ using UnityEditor;
 
 public class SimulationManager : MonoBehaviour
 {
+    struct DebugStatePreset
+    {
+        public float arousal;
+        public float resistance;
+        public float fatigue;
+        public float drive;
+        public float driveBias;
+        public float needMotion;
+        public float frustrationStack;
+        public float edgeTension;
+        public float edgeDwellTime;
+        public float edgePeakTimer;
+        public float orgasmScale;
+        public float cumulativeOrgasm;
+        public InputBand band;
+        public float bandDuration;
+        public bool subA;
+        public bool subB;
+        public string note;
+    }
+
+    struct DebugRouteSpec
+    {
+        public SimState fromState;
+        public SimState toState;
+        public string routeLabel;
+        public float driveBiasOverride;
+    }
+
     [Header("=== 参照 ===")]
     [SerializeField] InputHandler inputHandler;
     [SerializeField] SimSharedConfig sharedConfig;          // 全状態共通の基礎係数
@@ -494,6 +523,11 @@ public class SimulationManager : MonoBehaviour
         s == SimState.End_C_White ||
         s == SimState.End_C_Overload;
 
+    public string GetDebugPresetNote(SimState state)
+    {
+        return BuildDebugStatePreset(state).note;
+    }
+
     public void RestartSimulation()
     {
         param.Reset();
@@ -541,6 +575,14 @@ public class SimulationManager : MonoBehaviour
         OnStateChanged?.Invoke(currentState);
     }
 
+    public void ForceStateForDebug(SimState state)
+    {
+        if (IsEndState(state)) return;
+
+        var preset = BuildDebugStatePreset(state);
+        ApplyDebugStatePreset(state, preset);
+    }
+
     // デバッグ用：強制状態遷移 + パラメータプリセット適用
     public void ForceStateWithPreset(SimState state,
         float arousal, float resistance, float fatigue, float drive, float driveBias)
@@ -556,6 +598,379 @@ public class SimulationManager : MonoBehaviour
         param.EdgeDwellTime    = 0f;
         param.EdgePeakTimer    = 0f;
         ForceState(state);
+    }
+
+    DebugStatePreset BuildDebugStatePreset(SimState state)
+    {
+        var preset = GetBaselineDebugPreset(state);
+        if (state == SimState.Guarded)
+            return preset;
+
+        if (!TryGetRepresentativeDebugRoute(state, out var route, out var rule))
+            return preset;
+
+        ApplyRuleConditionsToPreset(ref preset, rule);
+        ApplyRouteFlavorToPreset(ref preset, route, rule);
+        preset.note = $"{route.routeLabel} | {rule.note}";
+        return preset;
+    }
+
+    DebugStatePreset GetBaselineDebugPreset(SimState state)
+    {
+        return state switch
+        {
+            SimState.Guarded => new DebugStatePreset
+            {
+                arousal = 0.12f,
+                resistance = 0.52f,
+                fatigue = 0.08f,
+                drive = 0.08f,
+                driveBias = -0.05f,
+                needMotion = 0.08f,
+                frustrationStack = 0.02f,
+                edgeTension = 0f,
+                edgeDwellTime = 0f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0f,
+                cumulativeOrgasm = 0.05f,
+                band = InputBand.Stop,
+                bandDuration = 0.6f,
+                subA = false,
+                subB = false,
+                note = "初期寄りのベース値"
+            },
+            SimState.Defensive => new DebugStatePreset
+            {
+                arousal = 0.24f,
+                resistance = 0.78f,
+                fatigue = 0.22f,
+                drive = 0.22f,
+                driveBias = 0.06f,
+                needMotion = 0.18f,
+                frustrationStack = 0.08f,
+                edgeTension = 0f,
+                edgeDwellTime = 0f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0f,
+                cumulativeOrgasm = 0.06f,
+                band = InputBand.Above,
+                bandDuration = 0.8f,
+                subA = false,
+                subB = true,
+                note = "Defensive baseline"
+            },
+            SimState.Overridden => new DebugStatePreset
+            {
+                arousal = 0.58f,
+                resistance = 0.42f,
+                fatigue = 0.70f,
+                drive = 0.56f,
+                driveBias = 0.10f,
+                needMotion = 0.10f,
+                frustrationStack = 0.10f,
+                edgeTension = 0.24f,
+                edgeDwellTime = 0.6f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0.20f,
+                cumulativeOrgasm = 0.16f,
+                band = InputBand.Above,
+                bandDuration = 1.1f,
+                subA = true,
+                subB = false,
+                note = "Overridden baseline"
+            },
+            SimState.FrustratedCraving => new DebugStatePreset
+            {
+                arousal = 0.44f,
+                resistance = 0.54f,
+                fatigue = 0.34f,
+                drive = 0.58f,
+                driveBias = -0.16f,
+                needMotion = 0.42f,
+                frustrationStack = 0.40f,
+                edgeTension = 0.18f,
+                edgeDwellTime = 0.3f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0f,
+                cumulativeOrgasm = 0.12f,
+                band = InputBand.Below,
+                bandDuration = 5.1f,
+                subA = false,
+                subB = false,
+                note = "Frustrated baseline"
+            },
+            SimState.Acclimating => new DebugStatePreset
+            {
+                arousal = 0.54f,
+                resistance = 0.24f,
+                fatigue = 0.32f,
+                drive = 0.38f,
+                driveBias = -0.04f,
+                needMotion = 0.16f,
+                frustrationStack = 0.05f,
+                edgeTension = 0.10f,
+                edgeDwellTime = 0.2f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0f,
+                cumulativeOrgasm = 0.08f,
+                band = InputBand.Within,
+                bandDuration = 0.9f,
+                subA = true,
+                subB = false,
+                note = "Acclimating baseline"
+            },
+            SimState.Surrendered => new DebugStatePreset
+            {
+                arousal = 0.70f,
+                resistance = 0.14f,
+                fatigue = 0.46f,
+                drive = 0.60f,
+                driveBias = -0.08f,
+                needMotion = 0.12f,
+                frustrationStack = 0.02f,
+                edgeTension = 0.20f,
+                edgeDwellTime = 0.5f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0.16f,
+                cumulativeOrgasm = 0.22f,
+                band = InputBand.Within,
+                bandDuration = 1.2f,
+                subA = true,
+                subB = false,
+                note = "Surrendered baseline"
+            },
+            SimState.BrokenDown => new DebugStatePreset
+            {
+                arousal = 0.78f,
+                resistance = 0.06f,
+                fatigue = 0.82f,
+                drive = 0.80f,
+                driveBias = 0.20f,
+                needMotion = 0.06f,
+                frustrationStack = 0f,
+                edgeTension = 0.34f,
+                edgeDwellTime = 0.9f,
+                edgePeakTimer = 0f,
+                orgasmScale = 0.26f,
+                cumulativeOrgasm = 0.30f,
+                band = InputBand.Above,
+                bandDuration = 0.8f,
+                subA = true,
+                subB = false,
+                note = "BrokenDown baseline"
+            },
+            _ => default
+        };
+    }
+
+    bool TryGetRepresentativeDebugRoute(SimState state, out DebugRouteSpec route, out TransitionRule rule)
+    {
+        route = state switch
+        {
+            SimState.Defensive => new DebugRouteSpec { fromState = SimState.Guarded, toState = SimState.Defensive, routeLabel = "代表流入: Guarded -> Defensive", driveBiasOverride = 0.08f },
+            SimState.Overridden => new DebugRouteSpec { fromState = SimState.Defensive, toState = SimState.Overridden, routeLabel = "代表流入: Defensive -> Overridden", driveBiasOverride = 0.12f },
+            SimState.FrustratedCraving => new DebugRouteSpec { fromState = SimState.Defensive, toState = SimState.FrustratedCraving, routeLabel = "代表流入: Defensive -> FrustratedCraving", driveBiasOverride = -0.18f },
+            SimState.Acclimating => new DebugRouteSpec { fromState = SimState.Guarded, toState = SimState.Acclimating, routeLabel = "代表流入: Guarded -> Acclimating", driveBiasOverride = -0.04f },
+            SimState.Surrendered => new DebugRouteSpec { fromState = SimState.Acclimating, toState = SimState.Surrendered, routeLabel = "代表流入: Acclimating -> Surrendered", driveBiasOverride = -0.10f },
+            SimState.BrokenDown => new DebugRouteSpec { fromState = SimState.Surrendered, toState = SimState.BrokenDown, routeLabel = "代表流入: Surrendered -> BrokenDown", driveBiasOverride = 0.24f },
+            _ => default
+        };
+
+        rule = null;
+        if (transitionConfig == null || transitionConfig.rules == null)
+            return false;
+
+        foreach (var candidate in transitionConfig.rules)
+        {
+            if (!candidate.enabled) continue;
+            if (candidate.fromState != route.fromState) continue;
+            if (candidate.toState != route.toState) continue;
+            rule = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
+    void ApplyRuleConditionsToPreset(ref DebugStatePreset preset, TransitionRule rule)
+    {
+        if (rule == null || rule.conditions == null) return;
+
+        foreach (var condition in rule.conditions)
+        {
+            float threshold = condition.threshold;
+            switch (condition.param)
+            {
+                case ConditionParam.Arousal:
+                    preset.arousal = OffsetFromThreshold(condition.op, threshold, 0.05f);
+                    break;
+                case ConditionParam.Resistance:
+                    preset.resistance = OffsetFromThreshold(condition.op, threshold, 0.05f);
+                    break;
+                case ConditionParam.Fatigue:
+                    preset.fatigue = OffsetFromThreshold(condition.op, threshold, 0.05f);
+                    break;
+                case ConditionParam.Drive:
+                    preset.drive = OffsetFromThreshold(condition.op, threshold, 0.05f);
+                    break;
+                case ConditionParam.DriveBias:
+                    preset.driveBias = OffsetSignedFromThreshold(condition.op, threshold, 0.08f);
+                    break;
+                case ConditionParam.EdgeDwellTime:
+                    preset.edgeDwellTime = Mathf.Max(0f, threshold + 0.2f);
+                    break;
+            }
+        }
+    }
+
+    void ApplyRouteFlavorToPreset(ref DebugStatePreset preset, DebugRouteSpec route, TransitionRule rule)
+    {
+        preset.driveBias = route.driveBiasOverride;
+
+        if (rule.requiredBand != BandRequirement.Any)
+        {
+            preset.band = ToInputBand(rule.requiredBand);
+            preset.bandDuration = Mathf.Max(rule.bandDuration + 0.2f, 0.4f);
+        }
+        else
+        {
+            preset.bandDuration = Mathf.Max(preset.bandDuration, 0.6f);
+        }
+
+        switch (route.toState)
+        {
+            case SimState.Defensive:
+                preset.subA = false;
+                preset.subB = true;
+                break;
+            case SimState.Overridden:
+                preset.band = InputBand.Above;
+                preset.bandDuration = Mathf.Max(preset.bandDuration, 1.0f);
+                preset.subA = true;
+                preset.subB = false;
+                preset.edgeTension = Mathf.Max(preset.edgeTension, 0.24f);
+                break;
+            case SimState.FrustratedCraving:
+                preset.band = InputBand.Below;
+                preset.bandDuration = Mathf.Max(preset.bandDuration, 5.2f);
+                preset.subA = false;
+                preset.subB = false;
+                preset.needMotion = Mathf.Max(preset.needMotion, 0.40f);
+                preset.frustrationStack = Mathf.Max(preset.frustrationStack, 0.40f);
+                break;
+            case SimState.Acclimating:
+                preset.band = InputBand.Within;
+                preset.bandDuration = Mathf.Max(preset.bandDuration, 0.8f);
+                preset.subA = true;
+                preset.subB = false;
+                break;
+            case SimState.Surrendered:
+                preset.band = InputBand.Within;
+                preset.bandDuration = Mathf.Max(preset.bandDuration, 1.0f);
+                preset.subA = true;
+                preset.subB = false;
+                preset.orgasmScale = Mathf.Max(preset.orgasmScale, 0.16f);
+                preset.cumulativeOrgasm = Mathf.Max(preset.cumulativeOrgasm, 0.20f);
+                break;
+            case SimState.BrokenDown:
+                preset.band = InputBand.Above;
+                preset.bandDuration = Mathf.Max(preset.bandDuration, 0.8f);
+                preset.subA = true;
+                preset.subB = false;
+                preset.edgeTension = Mathf.Max(preset.edgeTension, 0.30f);
+                preset.cumulativeOrgasm = Mathf.Max(preset.cumulativeOrgasm, 0.28f);
+                break;
+        }
+    }
+
+    float OffsetFromThreshold(CompareOp op, float threshold, float margin)
+    {
+        return op switch
+        {
+            CompareOp.GreaterEqual => Mathf.Clamp01(threshold + margin),
+            CompareOp.GreaterThan => Mathf.Clamp01(threshold + margin),
+            CompareOp.LessEqual => Mathf.Clamp01(threshold - margin),
+            CompareOp.LessThan => Mathf.Clamp01(threshold - margin),
+            _ => Mathf.Clamp01(threshold)
+        };
+    }
+
+    float OffsetSignedFromThreshold(CompareOp op, float threshold, float margin)
+    {
+        float value = op switch
+        {
+            CompareOp.GreaterEqual => threshold + margin,
+            CompareOp.GreaterThan => threshold + margin,
+            CompareOp.LessEqual => threshold - margin,
+            CompareOp.LessThan => threshold - margin,
+            _ => threshold
+        };
+        return Mathf.Clamp(value, -1f, 1f);
+    }
+
+    InputBand ToInputBand(BandRequirement requirement)
+    {
+        return requirement switch
+        {
+            BandRequirement.Stop => InputBand.Stop,
+            BandRequirement.Below => InputBand.Below,
+            BandRequirement.Within => InputBand.Within,
+            BandRequirement.Above => InputBand.Above,
+            _ => InputBand.Stop
+        };
+    }
+
+    void ApplyDebugStatePreset(SimState state, DebugStatePreset preset)
+    {
+        ForceState(state);
+
+        param.Arousal          = Mathf.Clamp01(preset.arousal);
+        param.Resistance       = Mathf.Clamp01(preset.resistance);
+        param.Fatigue          = Mathf.Clamp01(preset.fatigue);
+        param.Drive            = Mathf.Clamp01(preset.drive);
+        param.DriveBias        = Mathf.Clamp(preset.driveBias, -1f, 1f);
+        param.NeedMotion       = Mathf.Clamp01(preset.needMotion);
+        param.FrustrationStack = Mathf.Clamp01(preset.frustrationStack);
+        param.EdgeTension      = Mathf.Clamp01(preset.edgeTension);
+        param.EdgeDwellTime    = Mathf.Max(0f, preset.edgeDwellTime);
+        param.EdgePeakTimer    = Mathf.Max(0f, preset.edgePeakTimer);
+        param.OrgasmScale      = Mathf.Clamp01(preset.orgasmScale);
+        param.CumulativeOrgasm = Mathf.Clamp01(preset.cumulativeOrgasm);
+
+        if (inputHandler != null)
+        {
+            switch (preset.band)
+            {
+                case InputBand.Stop:
+                    inputHandler.SetMainIntensity(0f);
+                    inputHandler.SetStop();
+                    break;
+                case InputBand.Below:
+                    inputHandler.SetMainIntensity(Mathf.Clamp01(runtimeConfig.TolLow * 0.6f));
+                    break;
+                case InputBand.Within:
+                    inputHandler.SetMainIntensity(Mathf.Clamp01((runtimeConfig.TolLow + runtimeConfig.TolHigh) * 0.5f));
+                    break;
+                case InputBand.Above:
+                    inputHandler.SetMainIntensity(Mathf.Clamp01(runtimeConfig.TolHigh + 0.12f));
+                    break;
+            }
+
+            inputHandler.SetSubA(preset.subA);
+            inputHandler.SetSubB(preset.subB);
+        }
+
+        aboveDuration    = preset.band == InputBand.Above  ? preset.bandDuration : 0f;
+        belowDuration    = preset.band == InputBand.Below  ? preset.bandDuration : 0f;
+        withinDuration   = preset.band == InputBand.Within ? preset.bandDuration : 0f;
+        stopDuration     = preset.band == InputBand.Stop   ? preset.bandDuration : 0f;
+        driveRampTimer   = (preset.band == InputBand.Below || preset.band == InputBand.Above)
+            ? Mathf.Max(0f, runtimeConfig.DriveChangeDelay + 0.2f)
+            : 0f;
+        currentBand      = preset.band;
+        stateOrgasmCount = 0;
+        justOrgasmed     = false;
+        forceStateLockTimer = 1.5f;
     }
 
     // --- Unity側で手動接続が必要な作業（コメント） ---

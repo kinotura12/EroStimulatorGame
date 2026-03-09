@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>State Archetype Table / Drive-Resistance Map</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 250, 242, 0.92);
+      --panel-strong: #fff7eb;
+      --line: #d8cbb9;
+      --line-strong: #ad9476;
+      --text: #2f261d;
+      --muted: #756556;
+      --danger: #a63b2d;
+      --danger-bg: #f9ddd9;
+      --ok: #2f6f58;
+      --shadow: 0 18px 46px rgba(78, 53, 28, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(183, 141, 92, 0.18), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(110, 128, 92, 0.18), transparent 28%),
+        linear-gradient(180deg, #f8f3ec 0%, #efe6db 100%);
+    }
+
+    .shell {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 24px auto 40px;
+    }
+
+    .hero, .panel {
+      background: var(--panel);
+      border: 1px solid rgba(173, 148, 118, 0.28);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      padding: 28px 30px;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .hero h1 {
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1.04;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+
+    .sub {
+      color: var(--muted);
+      max-width: 980px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.08fr 1.32fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel h2 {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .panel .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      margin-bottom: 18px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .swatch {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+    }
+
+    .state-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .state-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.52);
+      padding: 12px 13px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .state-card:hover,
+    .state-card.active {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .state-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .state-card h3 {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .state-card p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .focus-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-strong);
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .focus-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .focus-header .title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .focus-header .subline {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 11px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .metric-note {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(216, 203, 185, 0.82);
+      vertical-align: top;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f6ede1;
+      z-index: 1;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr.active { background: rgba(183, 141, 92, 0.14); }
+
+    .small {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .rule {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 13px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .rule-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .rule-path {
+      font-weight: 700;
+    }
+
+    .rule-status {
+      white-space: nowrap;
+      color: var(--muted);
+    }
+
+    .rule-note {
+      font-size: 12px;
+      line-height: 1.55;
+      margin-bottom: 6px;
+    }
+
+    .rule-cond {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .grid-svg-wrap {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(166, 59, 45, 0.08) 0%, rgba(255, 255, 255, 0) 50%, rgba(47, 111, 88, 0.08) 100%),
+        linear-gradient(180deg, rgba(47, 111, 88, 0.08) 0%, rgba(255, 255, 255, 0) 50%, rgba(166, 59, 45, 0.08) 100%),
+        #fffaf3;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .axis-label {
+      font-size: 12px;
+      fill: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .quadrant-label {
+      font-size: 11px;
+      fill: #8a7664;
+    }
+
+    .point {
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .point.active .point-ring,
+    .point:hover .point-ring {
+      stroke-width: 3;
+      stroke: #1f140b;
+    }
+
+    .point text {
+      font-size: 11px;
+      fill: var(--text);
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    .point-ring {
+      fill: rgba(255, 255, 255, 0.84);
+      stroke: rgba(47, 38, 29, 0.25);
+      stroke-width: 1.5;
+    }
+
+    .warnings {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .warning {
+      border-radius: 16px;
+      padding: 12px 13px;
+      border: 1px solid rgba(166, 59, 45, 0.22);
+      background: var(--danger-bg);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1180px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100vw - 16px, 1480px); margin-top: 16px; }
+      .hero, .panel { border-radius: 18px; }
+      .hero { padding: 20px; }
+      .panel { padding: 16px; }
+      .state-list { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>State Archetype Table / Drive-Resistance Map</h1>
+      <p class="sub">
+        実装にある状態遷移と状態設定値を見ながら、状態の性格をまとめて把握するための補助ビューです。
+        遷移ルールとしきい値は現行実装準拠、右側のマップは `縦=Drive(理性崩壊の進行度)` と `横=Resistance↔Acceptance(拒絶↔受容)` の推定配置で表示しています。
+      </p>
+      <div class="chips">
+        <span class="chip">Source: Assets/Scripts/StateResolver.cs</span>
+        <span class="chip">Source: Assets/Sim/StateTransitionConfig.asset</span>
+        <span class="chip">Source: Assets/Sim/StateConfigs/*.asset</span>
+        <span class="chip">Current transition asset after dead-rule cleanup</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>State Archetype Table</h2>
+        <p class="meta">各状態の役割、Tol 帯、主要なしきい値、推定 affect 座標、主要遷移先を一覧化しています。状態を選ぶと右側のグリッドと下の遷移詳細が連動します。</p>
+
+        <div class="legend" id="legend"></div>
+        <div class="state-list" id="stateList"></div>
+
+        <div class="focus-box" id="focusBox"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Archetype</th>
+                <th>Tol</th>
+                <th>Affect</th>
+                <th>Primary Routes</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="footer-note">
+          `Primary Routes` は現在の asset に残っている有効ルールを集約しています。
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Drive-Resistance Map</h2>
+        <p class="meta">横軸は `拒絶 ↔ 受容`、縦軸は `Drive(理性崩壊の進行度)` です。`Arousal` は補助値として詳細に残し、主座標は状態差が見えやすい `Drive` ベースにしています。クリックで状態詳細へフォーカスします。</p>
+
+        <div class="grid-svg-wrap">
+          <svg id="affectSvg" viewBox="0 0 720 560" aria-label="Drive Resistance Map"></svg>
+        </div>
+
+        <div class="warnings" id="warnings"></div>
+        <div class="rule-list" id="ruleList"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const states = [
+      {
+        id: "Guarded",
+        num: "1",
+        jp: "Guarded",
+        color: "#4b7bec",
+        description: "心を閉ざして冷や汗。警戒はあるが、まだ拒絶に振り切っていない初期状態。",
+        archetype: "Guarded baseline / tense self-control",
+        arousal: 0.20,
+        drive: 0.10,
+        control: 0.82,
+        acceptance: 0.28,
+        driveTone: "suppressed",
+        tolLow: 0.30,
+        tolHigh: 0.50,
+        transitionNotes: [
+          "Resistance >= 0.75 で Defensive",
+          "Below 5s + Drive >= 0.5 で FrustratedCraving",
+          "Resistance <= 0.35 + Arousal >= 0.5 で Acclimating"
+        ],
+        basis: "初期説明は緊張と警戒。Tol が狭く、受容帯が狭い。"
+      },
+      {
+        id: "Defensive",
+        num: "2",
+        jp: "Defensive",
+        color: "#d9485f",
+        description: "不機嫌・拒絶。抵抗感が高く、強い入力やお預けで分岐しやすい。",
+        archetype: "Reactive rejection / anger-tinged defense",
+        arousal: 0.56,
+        drive: 0.24,
+        control: 0.76,
+        acceptance: 0.12,
+        driveTone: "reactive",
+        tolLow: 0.20,
+        tolHigh: 0.40,
+        transitionNotes: [
+          "Fatigue >= 0.7 + Drive >= 0.5 で Overridden",
+          "Below 5s + Drive >= 0.5 で FrustratedCraving",
+          "Arousal <= 0.35 + Drive <= 0.3 + Resistance <= 0.5 で Guarded"
+        ],
+        basis: "拒絶・反発が前景。快感はそこそこ上がるが、受容はかなり低い。"
+      },
+      {
+        id: "Overridden",
+        num: "3",
+        jp: "Overridden",
+        color: "#f08c2b",
+        description: "強い快感で押し切られる。受動的に高覚醒へ引っ張られている状態。",
+        archetype: "Forced pleasure / overwhelmed high arousal",
+        arousal: 0.86,
+        drive: 0.62,
+        control: 0.24,
+        acceptance: 0.42,
+        driveTone: "overloaded",
+        tolLow: 0.30,
+        tolHigh: 0.70,
+        transitionNotes: [
+          "OrgasmCount >= 3 + Fatigue >= 0.9 で End_A",
+          "Arousal <= 0.35 + Drive <= 0.3 で Guarded",
+          "OrgasmCount >= 3 + Fatigue >= 0.9 で End_A"
+        ],
+        basis: "快感は高いが、主体的受容までは進んでいないので中央やや左。"
+      },
+      {
+        id: "FrustratedCraving",
+        num: "4",
+        jp: "FrustratedCraving",
+        color: "#8f5bd6",
+        description: "精神は閉じているのに身体が求める困惑状態。欠乏と欲求が同時に立つ。",
+        archetype: "Frustrated wanting / conflicted craving",
+        arousal: 0.74,
+        drive: 0.54,
+        control: 0.34,
+        acceptance: 0.33,
+        driveTone: "hungry",
+        tolLow: 0.25,
+        tolHigh: 0.55,
+        transitionNotes: [
+          "Fatigue >= 0.8 + Drive >= 0.7 + Arousal >= 0.6 で BrokenDown",
+          "Above 5s + Fatigue >= 0.6 で Overridden",
+          "Resistance <= 0.35 + Arousal >= 0.5 で Acclimating"
+        ],
+        basis: "欲求は高いが受容には傾いていない。高快感・低受容。"
+      },
+      {
+        id: "Acclimating",
+        num: "5",
+        jp: "Acclimating",
+        color: "#2f9e72",
+        description: "身体が快楽を受け入れ始める順応状態。覚醒は高いが、コントロールはまだ残る。",
+        archetype: "Adaptation / increasingly comfortable pleasure",
+        arousal: 0.56,
+        drive: 0.46,
+        control: 0.52,
+        acceptance: 0.68,
+        driveTone: "warming",
+        tolLow: 0.30,
+        tolHigh: 0.70,
+        transitionNotes: [
+          "Arousal >= 0.65 + Drive >= 0.5 で Surrendered",
+          "Arousal <= 0.35 + Drive <= 0.3 で Guarded",
+          "Arousal <= 0.35 + Drive <= 0.3 で Guarded"
+        ],
+        basis: "順応と受容が前景。快感は中高、受容は明確に右側。"
+      },
+      {
+        id: "Surrendered",
+        num: "6",
+        jp: "Surrendered",
+        color: "#d4a017",
+        description: "通常快楽落ち。広い入力帯を快として飲み込み、受容が高い。",
+        archetype: "Yielded pleasure / high acceptance",
+        arousal: 0.64,
+        drive: 0.74,
+        control: 0.18,
+        acceptance: 0.88,
+        driveTone: "yielded",
+        tolLow: 0.20,
+        tolHigh: 0.80,
+        transitionNotes: [
+          "Orgasm 2回以上の End_B ルールは現在 asset に存在しない",
+          "OrgasmCount >= 2 + Drive >= 0.7 + Arousal >= 0.6 で BrokenDown",
+          "Arousal <= 0.35 + Drive <= 0.3 で Guarded"
+        ],
+        basis: "受容度が非常に高い。快感は高いが BrokenDown よりは少し安定。"
+      },
+      {
+        id: "BrokenDown",
+        num: "7",
+        jp: "BrokenDown",
+        color: "#c23b58",
+        description: "理性崩壊。ほぼ全刺激帯が許容されるサービスタイム状態。",
+        archetype: "Collapse / ecstatic or melted overload",
+        arousal: 0.96,
+        drive: 0.98,
+        control: 0.02,
+        acceptance: 0.98,
+        driveTone: "locked by DriveBias",
+        tolLow: 0.05,
+        tolHigh: 0.95,
+        transitionNotes: [
+          "OrgasmCount >= 3 + Fatigue >= 0.9 + DriveBias < 0 で End_C_White",
+          "OrgasmCount >= 3 + Fatigue >= 0.9 + DriveBias >= 0 で End_C_Overload"
+        ],
+        basis: "理性崩壊で受容は最大、快感も最大近傍。"
+      }
+    ];
+
+    const rules = [
+      { from: "Guarded", to: "Defensive", note: "①→② Resistance高（防衛感上昇）", band: "Any", duration: 0, conditions: ["Resistance >= 0.75"] },
+      { from: "Guarded", to: "FrustratedCraving", note: "①→④ Below継続+Drive高（お預け欲求）", band: "Below", duration: 5, conditions: ["Drive >= 0.5"] },
+      { from: "Guarded", to: "Acclimating", note: "①→⑤ Resistance低+Arousal高（馴化へ）", band: "Any", duration: 0, conditions: ["Resistance <= 0.35", "Arousal >= 0.5"] },
+      { from: "Defensive", to: "Overridden", note: "②→③ Fatigue高+Drive中（疲れと興奮で屈服）", band: "Any", duration: 0, conditions: ["Fatigue >= 0.7", "Drive >= 0.5"] },
+      { from: "Defensive", to: "FrustratedCraving", note: "②→④ Below継続+Drive高（お預け）", band: "Below", duration: 5, conditions: ["Drive >= 0.5"] },
+      { from: "Defensive", to: "Acclimating", note: "②→⑤ Resistance低+Arousal高（馴化へ）", band: "Any", duration: 0, conditions: ["Resistance <= 0.35", "Arousal >= 0.5"] },
+      { from: "Defensive", to: "Guarded", note: "②→① Arousal低+Drive低+Resistance低（落ち着いて防衛へ）", band: "Any", duration: 0, conditions: ["Arousal <= 0.35", "Drive <= 0.3", "Resistance <= 0.5"] },
+      { from: "Overridden", to: "End_A", note: "END_A ③→End_A 射精3回+Fatigue高（グッタリエンド）", band: "Any", duration: 0, conditions: ["OrgasmCount >= 3", "Fatigue >= 0.9"] },
+      { from: "Overridden", to: "Guarded", note: "③→① Arousal低+Drive低（落ち着いて防衛へ）", band: "Any", duration: 0, conditions: ["Arousal <= 0.35", "Drive <= 0.3"] },
+      { from: "FrustratedCraving", to: "BrokenDown", note: "④→⑦ Fatigue高+Drive高+Arousal高（理性崩壊）", band: "Any", duration: 0, conditions: ["Fatigue >= 0.8", "Drive >= 0.7", "Arousal >= 0.6"] },
+      { from: "FrustratedCraving", to: "Overridden", note: "④→③ Above継続+Fatigue高（強い山で屈服）", band: "Above", duration: 5, conditions: ["Fatigue >= 0.6"] },
+      { from: "FrustratedCraving", to: "Acclimating", note: "④→⑤ Resistance低+Arousal高（防衛崩れて馴化へ）", band: "Any", duration: 0, conditions: ["Resistance <= 0.35", "Arousal >= 0.5"] },
+      { from: "Acclimating", to: "Surrendered", note: "⑤→⑥ Arousal高+Drive高（降参）", band: "Any", duration: 0, conditions: ["Arousal >= 0.65", "Drive >= 0.5"] },
+      { from: "Acclimating", to: "Guarded", note: "⑤→① Arousal低+Drive低（冷静に戻る）", band: "Any", duration: 0, conditions: ["Arousal <= 0.35", "Drive <= 0.3"] },
+      { from: "Surrendered", to: "BrokenDown", note: "⑥→⑦ 射精2回以上+Drive高+Arousal高（理性崩壊）", band: "Any", duration: 0, conditions: ["OrgasmCount >= 2", "Drive >= 0.7", "Arousal >= 0.6"] },
+      { from: "Surrendered", to: "Guarded", note: "⑥→① Arousal低+Drive低（冷静に戻る）", band: "Any", duration: 0, conditions: ["Arousal <= 0.35", "Drive <= 0.3"] },
+      { from: "BrokenDown", to: "End_C_White", note: "END_C_White ⑦→End_C_White 射精3回+Fatigue高+DriveBias<0", band: "Any", duration: 0, conditions: ["OrgasmCount >= 3", "Fatigue >= 0.9", "DriveBias < 0"] },
+      { from: "BrokenDown", to: "End_C_Overload", note: "END_C_Overload ⑦→End_C_Overload 射精3回+Fatigue高+DriveBias>=0", band: "Any", duration: 0, conditions: ["OrgasmCount >= 3", "Fatigue >= 0.9", "DriveBias >= 0"] }
+    ];
+
+    const warnings = [
+      "BrokenDownMode ベースの死にルールは transition asset から削除済みです。可視化は現在 asset に残っているルールだけを表示しています。",
+      "旧 StateTransitionDiagram.html は現行実装と一致していません。たとえば Guarded→Defensive の条件値、Guarded→Acclimating のルート、Overridden の戻り先、Surrendered→End_B の有無がズレています。",
+      "実装 asset には Surrendered→End_B がありません。設計ドキュメントの意図と差分があるので、仕様なのか設定漏れなのかは別途確認が必要です。"
+    ];
+
+    const stateById = Object.fromEntries(states.map((state) => [state.id, state]));
+    let selectedStateId = "Guarded";
+
+    function summarizeRoutes(stateId) {
+      return rules
+        .filter((rule) => rule.from === stateId)
+        .map((rule) => `${shortId(rule.to)} (${renderBand(rule)})`)
+        .join(" / ");
+    }
+
+    function shortId(id) {
+      const state = stateById[id];
+      if (state) return `${state.num}.${state.jp}`;
+      return id.replaceAll("_", " ");
+    }
+
+    function renderBand(rule) {
+      return rule.band === "Any" ? "即時/Any" : `${rule.band} ${rule.duration}s`;
+    }
+
+    function renderLegend() {
+      const root = document.getElementById("legend");
+      root.innerHTML = states.map((state) => `
+        <span class="legend-item">
+          <span class="swatch" style="background:${state.color}"></span>
+          ${state.num}. ${state.jp}
+        </span>
+      `).join("");
+    }
+
+    function renderStateCards() {
+      const root = document.getElementById("stateList");
+      root.innerHTML = states.map((state) => `
+        <article class="state-card ${state.id === selectedStateId ? "active" : ""}" data-state-id="${state.id}">
+          <div class="state-top">
+            <span class="badge" style="background:${state.color}">${state.num}</span>
+            <div>
+              <h3>${state.jp}</h3>
+              <p>${state.archetype}</p>
+            </div>
+          </div>
+          <p>${state.description}</p>
+        </article>
+      `).join("");
+
+      root.querySelectorAll("[data-state-id]").forEach((node) => {
+        node.addEventListener("click", () => selectState(node.dataset.stateId));
+      });
+    }
+
+    function renderFocusBox() {
+      const state = stateById[selectedStateId];
+      const focus = document.getElementById("focusBox");
+      focus.innerHTML = `
+        <div class="focus-header">
+          <span class="badge" style="background:${state.color}">${state.num}</span>
+          <div>
+            <div class="title">${state.jp}</div>
+            <div class="subline">${state.archetype}</div>
+          </div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">Drive</div>
+            <div class="metric-value">${state.drive.toFixed(2)}</div>
+            <div class="metric-note">この図の縦軸。理性崩壊の進行度。</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tol Band</div>
+            <div class="metric-value">${state.tolLow.toFixed(2)} - ${state.tolHigh.toFixed(2)}</div>
+            <div class="metric-note">MainIntensity が Within になりやすい帯。</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Resistance / Acceptance</div>
+            <div class="metric-value">${(1 - state.acceptance).toFixed(2)} / ${state.acceptance.toFixed(2)}</div>
+            <div class="metric-note">横軸の把握用。左ほど拒絶、右ほど受容。</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Arousal / Control</div>
+            <div class="metric-value">${state.arousal.toFixed(2)} / ${state.control.toFixed(2)}</div>
+            <div class="metric-note">Arousal は快感量、Control は主体性の補助軸。</div>
+          </div>
+        </div>
+        <div class="footer-note">
+          ${state.description}<br>
+          推定根拠: ${state.basis}
+        </div>
+      `;
+    }
+
+    function renderTable() {
+      const body = document.getElementById("tableBody");
+      body.innerHTML = states.map((state) => `
+        <tr class="${state.id === selectedStateId ? "active" : ""}" data-state-id="${state.id}">
+          <td>
+            <strong>${state.num}. ${state.jp}</strong><br>
+            <span class="small">${state.description}</span>
+          </td>
+          <td>
+            <strong>${state.archetype}</strong><br>
+            <span class="small">Drive tone: ${state.driveTone}</span>
+          </td>
+          <td>
+            ${state.tolLow.toFixed(2)} - ${state.tolHigh.toFixed(2)}<br>
+            <span class="small">Within width ${(state.tolHigh - state.tolLow).toFixed(2)}</span>
+          </td>
+          <td>
+            Drive ${state.drive.toFixed(2)}<br>
+            <span class="small">Arousal ${state.arousal.toFixed(2)} / Acceptance ${state.acceptance.toFixed(2)}</span>
+          </td>
+          <td>
+            ${summarizeRoutes(state.id) || "No outgoing routes"}<br>
+            <span class="small">${state.transitionNotes[0]}</span>
+          </td>
+        </tr>
+      `).join("");
+
+      body.querySelectorAll("[data-state-id]").forEach((node) => {
+        node.addEventListener("click", () => selectState(node.dataset.stateId));
+      });
+    }
+
+    function renderAffectGrid() {
+      const svg = document.getElementById("affectSvg");
+      const w = 720;
+      const h = 560;
+      const pad = 68;
+      const x = (value) => pad + value * (w - pad * 2);
+      const y = (value) => h - pad - value * (h - pad * 2);
+
+      const points = states.map((state) => {
+        const px = x(state.acceptance);
+        const py = y(state.drive);
+        return `
+          <g class="point ${state.id === selectedStateId ? "active" : ""}" data-state-id="${state.id}" transform="translate(${px}, ${py})">
+            <circle class="point-ring" r="19" fill="${state.color}"></circle>
+            <circle r="11" fill="${state.color}"></circle>
+            <text text-anchor="middle" y="4">${state.num}</text>
+            <text text-anchor="middle" y="38">${state.jp}</text>
+          </g>
+        `;
+      }).join("");
+
+      svg.innerHTML = `
+        <rect x="0" y="0" width="${w}" height="${h}" fill="transparent"></rect>
+        <g stroke="rgba(117,101,86,0.16)" stroke-width="1">
+          <line x1="${pad}" y1="${pad}" x2="${w - pad}" y2="${pad}"></line>
+          <line x1="${pad}" y1="${h / 2}" x2="${w - pad}" y2="${h / 2}"></line>
+          <line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}"></line>
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h - pad}"></line>
+          <line x1="${w / 2}" y1="${pad}" x2="${w / 2}" y2="${h - pad}"></line>
+          <line x1="${w - pad}" y1="${pad}" x2="${w - pad}" y2="${h - pad}"></line>
+        </g>
+        <g stroke="rgba(47,38,29,0.42)" stroke-width="1.5">
+          <line x1="${pad}" y1="${h / 2}" x2="${w - pad}" y2="${h / 2}"></line>
+          <line x1="${w / 2}" y1="${pad}" x2="${w / 2}" y2="${h - pad}"></line>
+        </g>
+        <text class="axis-label" x="${w / 2}" y="${h - 18}" text-anchor="middle">RESISTANCE  ←  →  ACCEPTANCE</text>
+        <text class="axis-label" x="22" y="${h / 2}" text-anchor="middle" transform="rotate(-90, 22, ${h / 2})">DRIVE</text>
+        <text class="quadrant-label" x="${pad + 10}" y="${pad + 18}">High drive / resistant</text>
+        <text class="quadrant-label" x="${w - pad - 10}" y="${pad + 18}" text-anchor="end">High drive / accepting</text>
+        <text class="quadrant-label" x="${pad + 10}" y="${h - pad - 10}">Low drive / resistant</text>
+        <text class="quadrant-label" x="${w - pad - 10}" y="${h - pad - 10}" text-anchor="end">Low drive / accepting</text>
+        ${points}
+      `;
+
+      svg.querySelectorAll("[data-state-id]").forEach((node) => {
+        node.addEventListener("click", () => selectState(node.dataset.stateId));
+      });
+    }
+
+    function renderWarnings() {
+      const root = document.getElementById("warnings");
+      root.innerHTML = warnings.map((warning) => `<div class="warning">${warning}</div>`).join("");
+    }
+
+    function renderRules() {
+      const state = stateById[selectedStateId];
+      const stateRules = rules.filter((rule) => rule.from === selectedStateId);
+      const root = document.getElementById("ruleList");
+      root.innerHTML = `
+        <div>
+          <h3>${state.num}. ${state.jp} の遷移詳細</h3>
+          <p class="meta" style="margin:6px 0 0;">現在 asset に残っている遷移 ${stateRules.length} 本</p>
+        </div>
+        ${stateRules.map((rule) => `
+          <article class="rule">
+            <div class="rule-top">
+              <div class="rule-path">${shortId(rule.from)} → ${shortId(rule.to)}</div>
+              <div class="rule-status">Active</div>
+            </div>
+            <div class="rule-note">${rule.note}</div>
+            <div class="rule-cond">
+              Band: ${renderBand(rule)}<br>
+              Conditions: ${rule.conditions.join(" AND ")}
+            </div>
+          </article>
+        `).join("")}
+      `;
+    }
+
+    function selectState(stateId) {
+      selectedStateId = stateId;
+      renderStateCards();
+      renderFocusBox();
+      renderTable();
+      renderAffectGrid();
+      renderRules();
+    }
+
+    renderLegend();
+    renderWarnings();
+    selectState(selectedStateId);
+  </script>
+</body>
+</html>

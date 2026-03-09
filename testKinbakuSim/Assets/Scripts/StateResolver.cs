@@ -73,7 +73,6 @@ public class StateResolver
             ConditionParam.Drive          => p.Drive,
             ConditionParam.OrgasmCount    => (float)orgasmCount,
             ConditionParam.DriveBias      => p.DriveBias,
-            ConditionParam.BrokenDownMode => 0f,  // 廃止済み。DriveBias条件に移行
             ConditionParam.EdgeDwellTime  => p.EdgeDwellTime,
             _                             => 0f,
         };

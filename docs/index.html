@@ -52,12 +52,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/webbuild.loader.js";
+      var loaderUrl = buildUrl + "/docs.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/webbuild.data.unityweb",
-        frameworkUrl: buildUrl + "/webbuild.framework.js.unityweb",
-        codeUrl: buildUrl + "/webbuild.wasm.unityweb",
+        dataUrl: buildUrl + "/docs.data.unityweb",
+        frameworkUrl: buildUrl + "/docs.framework.js.unityweb",
+        codeUrl: buildUrl + "/docs.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "testKinbakuSim",
@@ -101,48 +101,6 @@
         // performance, uncomment the following line:
         // config.devicePixelRatio = 1;
 
-        // ピンチズーム：キャンバスコンテナをCSS transformで拡縮
-        (function() {
-          var container = document.querySelector("#unity-container");
-          var currentScale = 1.0;
-          var lastDist = 0;
-
-          function getTouchDist(e) {
-            var dx = e.touches[0].clientX - e.touches[1].clientX;
-            var dy = e.touches[0].clientY - e.touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-          }
-
-          container.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 2) {
-              lastDist = getTouchDist(e);
-              e.preventDefault();
-            }
-          }, { passive: false });
-
-          container.addEventListener('touchmove', function(e) {
-            if (e.touches.length === 2) {
-              var dist = getTouchDist(e);
-              var delta = dist / lastDist;
-              currentScale = Math.min(Math.max(currentScale * delta, 0.5), 3.0);
-              container.style.transformOrigin = 'center center';
-              container.style.transform = 'scale(' + currentScale + ')';
-              lastDist = dist;
-              e.preventDefault();
-            }
-          }, { passive: false });
-
-          // ダブルタップでリセット
-          var lastTap = 0;
-          container.addEventListener('touchend', function(e) {
-            var now = Date.now();
-            if (now - lastTap < 300 && e.touches.length === 0) {
-              currentScale = 1.0;
-              container.style.transform = 'scale(1)';
-            }
-            lastTap = now;
-          });
-        })();
 
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:

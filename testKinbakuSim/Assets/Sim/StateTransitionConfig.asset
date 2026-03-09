@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StateTransitionConfig
   m_EditorClassIdentifier: Assembly-CSharp::StateTransitionConfig
   rules:
-  - note: "\u2460\u2192\u2461 Resistance\u9AD8\uFF08\u9632\u885B\u611F\u4E0A\u6607\uFF09"
+  - note: "Guarded->Defensive  Resistance>=0.75"
     enabled: 1
     fromState: 0
     toState: 1
@@ -23,17 +23,7 @@ MonoBehaviour:
     - param: 1
       op: 0
       threshold: 0.75
-  - note: "\u2460\u2192\u2464 Below\u7D99\u7D9A+Drive\u9AD8\uFF08\u304A\u9803\u3051\u6B32\u6C42\uFF09"
-    enabled: 1
-    fromState: 0
-    toState: 3
-    requiredBand: 2
-    bandDuration: 5
-    conditions:
-    - param: 3
-      op: 0
-      threshold: 0.5
-  - note: "\u2460\u2192\u2465 Resistance\u4F4E+Arousal\u9AD8\uFF08\u99B4\u5316\u3078\uFF09"
+  - note: "Guarded->Acclimating  Resistance<=0.32 Drive>=0.30 Arousal>=0.50"
     enabled: 1
     fromState: 0
     toState: 4
@@ -42,34 +32,56 @@ MonoBehaviour:
     conditions:
     - param: 1
       op: 1
-      threshold: 0.35
+      threshold: 0.32
+    - param: 3
+      op: 0
+      threshold: 0.30
     - param: 0
       op: 0
-      threshold: 0.5
-  - note: "\u2461\u2192\u2462 Fatigue\u9AD8+Drive\u4E2D\uFF08\u75B2\u308C\u3068\u8208\u596E\u3067\u5C48\u670D\uFF09"
+      threshold: 0.50
+  - note: "Guarded->Frustrated  Below5s Drive>=0.50 EdgeDwell>=6s"
+    enabled: 1
+    fromState: 0
+    toState: 3
+    requiredBand: 2
+    bandDuration: 5
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.50
+    - param: 6
+      op: 0
+      threshold: 6
+  - note: "Defensive->Overridden  Drive>=0.50 Orgasm>=2 Fatigue>=0.60"
     enabled: 1
     fromState: 1
     toState: 2
     requiredBand: 0
     bandDuration: 0
     conditions:
-    - param: 2
-      op: 0
-      threshold: 0.7
     - param: 3
       op: 0
-      threshold: 0.5
-  - note: "\u2461\u2192\u2464 Below\u7D99\u7D9A+Drive\u9AD8\uFF08\u304A\u9803\u3051\uFF09"
+      threshold: 0.50
+    - param: 4
+      op: 0
+      threshold: 2
+    - param: 2
+      op: 0
+      threshold: 0.60
+  - note: "Defensive->Frustrated  Below4s Drive>=0.45 EdgeDwell>=6s"
     enabled: 1
     fromState: 1
     toState: 3
     requiredBand: 2
-    bandDuration: 5
+    bandDuration: 4
     conditions:
     - param: 3
       op: 0
-      threshold: 0.5
-  - note: "\u2461\u2192\u2465 Resistance\u4F4E+Arousal\u9AD8\uFF08\u99B4\u5316\u3078\uFF09"
+      threshold: 0.45
+    - param: 6
+      op: 0
+      threshold: 6
+  - note: "Defensive->Acclimating(heavy)  Resistance<=0.25 Drive>=0.40 Arousal>=0.70"
     enabled: 1
     fromState: 1
     toState: 4
@@ -78,27 +90,30 @@ MonoBehaviour:
     conditions:
     - param: 1
       op: 1
-      threshold: 0.35
+      threshold: 0.25
+    - param: 3
+      op: 0
+      threshold: 0.40
     - param: 0
       op: 0
-      threshold: 0.5
-  - note: "\u2461\u2192\u2460 Arousal\u4F4E+Drive\u4F4E+Resistance\u4F4E\uFF08\u843D\u3061\u7740\u3044\u3066\u9632\u885B\u3078\uFF09"
+      threshold: 0.70
+  - note: "Defensive->Guarded  Resistance<=0.55 Drive<=0.28 Arousal<=0.35"
     enabled: 1
     fromState: 1
     toState: 0
     requiredBand: 0
     bandDuration: 0
     conditions:
+    - param: 1
+      op: 1
+      threshold: 0.55
+    - param: 3
+      op: 1
+      threshold: 0.28
     - param: 0
       op: 1
       threshold: 0.35
-    - param: 3
-      op: 1
-      threshold: 0.3
-    - param: 1
-      op: 1
-      threshold: 0.5
-  - note: "END_A \u2462\u2192End_A \u5C04\u7CBE3\u56DE+Fatigue\u9AD8\uFF08\u30B0\u30C3\u30BF\u30EA\u30A8\u30F3\u30C9\uFF09"
+  - note: "END_A  Overridden->End_A  Orgasm>=4 Fatigue>=0.90"
     enabled: 1
     fromState: 2
     toState: 7
@@ -107,50 +122,91 @@ MonoBehaviour:
     conditions:
     - param: 4
       op: 0
-      threshold: 3
+      threshold: 4
     - param: 2
       op: 0
-      threshold: 0.9
-  - note: "\u2462\u2192\u2460 Arousal\u4F4E+Drive\u4F4E\uFF08\u843D\u3061\u7740\u3044\u3066\u9632\u885B\u3078\uFF09"
+      threshold: 0.90
+  - note: "Overridden->Frustrated  Below4s Drive>=0.50 EdgeDwell>=6s"
     enabled: 1
     fromState: 2
-    toState: 0
+    toState: 3
+    requiredBand: 2
+    bandDuration: 4
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.50
+    - param: 6
+      op: 0
+      threshold: 6
+  - note: "Overridden->Acclimating  Resistance<=0.30 Fatigue<=0.25 Arousal>=0.60 Drive>=0.45"
+    enabled: 1
+    fromState: 2
+    toState: 4
+    requiredBand: 0
+    bandDuration: 0
+    conditions:
+    - param: 1
+      op: 1
+      threshold: 0.30
+    - param: 2
+      op: 1
+      threshold: 0.25
+    - param: 0
+      op: 0
+      threshold: 0.60
+    - param: 3
+      op: 0
+      threshold: 0.45
+  - note: "Overridden->Defensive  Arousal<=0.38 Drive<=0.38 Resistance>=0.45"
+    enabled: 1
+    fromState: 2
+    toState: 1
     requiredBand: 0
     bandDuration: 0
     conditions:
     - param: 0
       op: 1
-      threshold: 0.35
+      threshold: 0.38
     - param: 3
       op: 1
-      threshold: 0.3
-  - note: "\u2464\u2192\u2467 Fatigue\u9AD8+Drive\u9AD8+Arousal\u9AD8\uFF08\u7406\u6027\u5D29\u58CA\uFF09"
+      threshold: 0.38
+    - param: 1
+      op: 0
+      threshold: 0.45
+  - note: "Frustrated->BrokenDown  Drive>=0.80 Orgasm>=2 Arousal>=0.60"
     enabled: 1
     fromState: 3
     toState: 6
     requiredBand: 0
     bandDuration: 0
     conditions:
-    - param: 2
-      op: 0
-      threshold: 0.8
     - param: 3
       op: 0
-      threshold: 0.7
+      threshold: 0.80
+    - param: 4
+      op: 0
+      threshold: 2
     - param: 0
       op: 0
-      threshold: 0.6
-  - note: "\u2464\u2192\u2462 Above\u7D99\u7D9A+Fatigue\u9AD8\uFF08\u5F37\u3044\u5C71\u3067\u5C48\u670D\uFF09"
+      threshold: 0.60
+  - note: "Frustrated->Overridden  Above4s Drive>=0.50 Orgasm>=1 Fatigue>=0.60"
     enabled: 1
     fromState: 3
     toState: 2
     requiredBand: 4
-    bandDuration: 5
+    bandDuration: 4
     conditions:
+    - param: 3
+      op: 0
+      threshold: 0.50
+    - param: 4
+      op: 0
+      threshold: 1
     - param: 2
       op: 0
-      threshold: 0.6
-  - note: "\u2464\u2192\u2465 Resistance\u4F4E+Arousal\u9AD8\uFF08\u9632\u885B\u5D29\u308C\u3066\u99B4\u5316\u3078\uFF09"
+      threshold: 0.60
+  - note: "Frustrated->Acclimating  Resistance<=0.30 Fatigue<=0.25 Arousal>=0.70 Drive>=0.45"
     enabled: 1
     fromState: 3
     toState: 4
@@ -159,24 +215,43 @@ MonoBehaviour:
     conditions:
     - param: 1
       op: 1
-      threshold: 0.35
+      threshold: 0.30
+    - param: 2
+      op: 1
+      threshold: 0.25
     - param: 0
       op: 0
-      threshold: 0.5
-  - note: "\u2465\u2192\u2466 Arousal\u9AD8+Drive\u9AD8\uFF08\u964D\u53C2\uFF09"
+      threshold: 0.70
+    - param: 3
+      op: 0
+      threshold: 0.45
+  - note: "Acclimating->Surrendered  Orgasm>=1 Resistance<=0.22"
     enabled: 1
     fromState: 4
     toState: 5
     requiredBand: 0
     bandDuration: 0
     conditions:
-    - param: 0
+    - param: 4
       op: 0
-      threshold: 0.65
+      threshold: 1
+    - param: 1
+      op: 1
+      threshold: 0.22
+  - note: "Acclimating->Frustrated  Below4s Drive>=0.50 EdgeDwell>=6s"
+    enabled: 1
+    fromState: 4
+    toState: 3
+    requiredBand: 2
+    bandDuration: 4
+    conditions:
     - param: 3
       op: 0
-      threshold: 0.5
-  - note: "\u2465\u2192\u2460 Arousal\u4F4E+Drive\u4F4E\uFF08\u51B7\u9759\u306B\u623B\u308B\uFF09"
+      threshold: 0.50
+    - param: 6
+      op: 0
+      threshold: 6
+  - note: "Acclimating->Guarded  Arousal<=0.20 Drive<=0.25"
     enabled: 1
     fromState: 4
     toState: 0
@@ -185,40 +260,66 @@ MonoBehaviour:
     conditions:
     - param: 0
       op: 1
-      threshold: 0.35
+      threshold: 0.20
     - param: 3
       op: 1
-      threshold: 0.3
-  - note: "\u2466\u2192\u2467 \u5C04\u7CBE2\u56DE\u4EE5\u4E0A+Drive\u9AD8+Arousal\u9AD8\uFF08\u7406\u6027\u5D29\u58CA\uFF09"
+      threshold: 0.25
+  - note: "Surrendered->BrokenDown(Toro)  Below3s Drive>=0.90 DriveBias<0 Orgasm>=3"
     enabled: 1
     fromState: 5
     toState: 6
+    requiredBand: 2
+    bandDuration: 3
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.90
+    - param: 5
+      op: 3
+      threshold: 0
+    - param: 4
+      op: 0
+      threshold: 3
+  - note: "Surrendered->BrokenDown(Ahe)  Above3s Drive>=0.90 DriveBias>=0 Orgasm>=3"
+    enabled: 1
+    fromState: 5
+    toState: 6
+    requiredBand: 4
+    bandDuration: 3
+    conditions:
+    - param: 3
+      op: 0
+      threshold: 0.90
+    - param: 5
+      op: 0
+      threshold: 0
+    - param: 4
+      op: 0
+      threshold: 3
+  - note: "END_B  Surrendered->End_B  Orgasm>=2 Fatigue>=0.88"
+    enabled: 1
+    fromState: 5
+    toState: 8
     requiredBand: 0
     bandDuration: 0
     conditions:
     - param: 4
       op: 0
       threshold: 2
-    - param: 3
+    - param: 2
       op: 0
-      threshold: 0.7
-    - param: 0
-      op: 0
-      threshold: 0.6
-  - note: "\u2466\u2192\u2460 Arousal\u4F4E+Drive\u4F4E\uFF08\u51B7\u9759\u306B\u623B\u308B\uFF09"
+      threshold: 0.88
+  - note: "Surrendered->Acclimating  Drive<=0.35"
     enabled: 1
     fromState: 5
-    toState: 0
+    toState: 4
     requiredBand: 0
     bandDuration: 0
     conditions:
-    - param: 0
-      op: 1
-      threshold: 0.35
     - param: 3
       op: 1
-      threshold: 0.3
-  - note: "END_C_White \u2467\u2192End_C_White \u5C04\u7CBE3\u56DE+Fatigue\u9AD8+DriveBias<0\uFF08\u30C8\u30ED\u30C8\u30ED\u843D\u3061\u30A8\u30F3\u30C9\uFF09"
+      threshold: 0.35
+  - note: "END_C_White  BrokenDown->End_C_White  Orgasm>=3 Fatigue>=0.90 DriveBias<0"
     enabled: 1
     fromState: 6
     toState: 9
@@ -230,11 +331,11 @@ MonoBehaviour:
       threshold: 3
     - param: 2
       op: 0
-      threshold: 0.9
+      threshold: 0.90
     - param: 5
       op: 3
       threshold: 0
-  - note: "END_C_Overload \u2467\u2192End_C_Overload \u5C04\u7CBE3\u56DE+Fatigue\u9AD8+DriveBias>=0\uFF08\u30A2\u30D8\u9854\u5D29\u58CA\u30A8\u30F3\u30C9\uFF09"
+  - note: "END_C_Overload  BrokenDown->End_C_Overload  Orgasm>=3 Fatigue>=0.90 DriveBias>=0"
     enabled: 1
     fromState: 6
     toState: 10
@@ -246,7 +347,7 @@ MonoBehaviour:
       threshold: 3
     - param: 2
       op: 0
-      threshold: 0.9
+      threshold: 0.90
     - param: 5
       op: 0
       threshold: 0

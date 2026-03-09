@@ -937,37 +937,13 @@ public class SimulationManager : MonoBehaviour
         param.OrgasmScale      = Mathf.Clamp01(preset.orgasmScale);
         param.CumulativeOrgasm = Mathf.Clamp01(preset.cumulativeOrgasm);
 
-        if (inputHandler != null)
-        {
-            switch (preset.band)
-            {
-                case InputBand.Stop:
-                    inputHandler.SetMainIntensity(0f);
-                    inputHandler.SetStop();
-                    break;
-                case InputBand.Below:
-                    inputHandler.SetMainIntensity(Mathf.Clamp01(runtimeConfig.TolLow * 0.6f));
-                    break;
-                case InputBand.Within:
-                    inputHandler.SetMainIntensity(Mathf.Clamp01((runtimeConfig.TolLow + runtimeConfig.TolHigh) * 0.5f));
-                    break;
-                case InputBand.Above:
-                    inputHandler.SetMainIntensity(Mathf.Clamp01(runtimeConfig.TolHigh + 0.12f));
-                    break;
-            }
-
-            inputHandler.SetSubA(preset.subA);
-            inputHandler.SetSubB(preset.subB);
-        }
-
-        aboveDuration    = preset.band == InputBand.Above  ? preset.bandDuration : 0f;
-        belowDuration    = preset.band == InputBand.Below  ? preset.bandDuration : 0f;
-        withinDuration   = preset.band == InputBand.Within ? preset.bandDuration : 0f;
-        stopDuration     = preset.band == InputBand.Stop   ? preset.bandDuration : 0f;
-        driveRampTimer   = (preset.band == InputBand.Below || preset.band == InputBand.Above)
-            ? Mathf.Max(0f, runtimeConfig.DriveChangeDelay + 0.2f)
-            : 0f;
-        currentBand      = preset.band;
+        // MainIntensity / SubA / SubB はユーザー入力値を保持（変更しない）
+        // band継続タイマーは 0 リセット。次のUpdate()で実入力から再積算される
+        aboveDuration    = 0f;
+        belowDuration    = 0f;
+        withinDuration   = 0f;
+        stopDuration     = 0f;
+        driveRampTimer   = 0f;
         stateOrgasmCount = 0;
         justOrgasmed     = false;
         forceStateLockTimer = 1.5f;

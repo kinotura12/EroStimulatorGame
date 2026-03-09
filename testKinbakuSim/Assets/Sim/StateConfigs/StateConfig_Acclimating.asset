@@ -13,42 +13,42 @@ MonoBehaviour:
   m_Name: StateConfig_Acclimating
   m_EditorClassIdentifier: Assembly-CSharp::SimStateConfig
   State: 4
-  OverrideArousal: 0
-  OverrideResistance: 0
-  OverrideFatigue: 0
-  OverrideDrive: 0
+  OverrideArousal: 1
+  OverrideResistance: 1
+  OverrideFatigue: 1
+  OverrideDrive: 1
   OverrideDriveBias: 0
   OverrideOrgasm: 0
   OverrideTransition: 0
   OverrideFrustration: 0
   OverrideNeedMotion: 1
-  OverrideSub: 0
-  OverrideEdge: 0
+  OverrideSub: 1
+  OverrideEdge: 1
   TolLow: 0.3
   TolHigh: 0.7
   ArousalChangeStop: -0.03
-  ArousalChangeBelow: 0.02
-  ArousalChangeWithin: 0.08
+  ArousalChangeBelow: 0.04
+  ArousalChangeWithin: 0.1
   ArousalChangeAbove: 0.15
-  ResistanceChangeStop: -0.01
-  ResistanceChangeBelow: -0.01
-  ResistanceChangeWithin: -0.01
-  ResistanceChangeAbove: 0.02
-  FatigueChangeStop: -0.1
-  FatigueChangeBelow: -0.04
-  FatigueChangeWithin: 0
-  FatigueChangeAbove: 0.02
-  FatigueMultiplier: 1
+  ResistanceChangeStop: -0.015
+  ResistanceChangeBelow: -0.045
+  ResistanceChangeWithin: -0.05
+  ResistanceChangeAbove: 0.01
+  FatigueChangeStop: -0.05
+  FatigueChangeBelow: -0.005
+  FatigueChangeWithin: 0.01
+  FatigueChangeAbove: 0.03
+  FatigueMultiplier: 0.9
   DriveChangeStop: -0.01
-  DriveChangeBelow: 0.02
-  DriveChangeWithin: 0
-  DriveChangeAbove: 0.02
+  DriveChangeBelow: 0.045
+  DriveChangeWithin: 0.02
+  DriveChangeAbove: 0.03
   DriveChangeDelay: 5
-  DriveArousalBoostFactor: 0.5
-  DriveBiasShiftBelow: 0.01
-  DriveBiasShiftAbove: 0.02
-  DriveBiasDecayWithin: 0
-  DriveBiasDecayStop: 0.005
+  DriveArousalBoostFactor: 0.35
+  DriveBiasShiftBelow: 0.025
+  DriveBiasShiftAbove: 0.03
+  DriveBiasDecayWithin: 0.008
+  DriveBiasDecayStop: 0.008
   TransitionAboveDuration: 5
   TransitionBelowDuration: 5
   TransitionWithinDuration: 8
@@ -62,30 +62,30 @@ MonoBehaviour:
   FrustrationStackGain: 0.05
   FrustrationStackThreshold: 0.6
   FrustrationDriveThreshold: 0.5
-  NeedMotionStopCalmChange: -0.05
-  NeedMotionStopArousedChange: 0.03
-  NeedMotionBelowChange: 0.06
-  NeedMotionWithinChange: -0.04
+  NeedMotionStopCalmChange: -0.04
+  NeedMotionStopArousedChange: 0.015
+  NeedMotionBelowChange: 0.05
+  NeedMotionWithinChange: -0.03
   NeedMotionAboveChange: -0.05
   NeedMotionArousalThreshold: 0.5
-  SubADriveChange: 0.02
-  SubAArousalChange: 0.04
-  SubADriveBiasGain: 0.03
+  SubADriveChange: 0.03
+  SubAArousalChange: 0.05
+  SubADriveBiasGain: 0.035
   SubAResistanceChange: -0.03
-  SubBDriveChange: 0.02
-  SubBArousalChange: 0.02
-  SubBDriveBiasGain: -0.01
+  SubBDriveChange: 0.045
+  SubBArousalChange: 0.03
+  SubBDriveBiasGain: -0.04
   SubBResistanceChange: -0.01
-  SubBothArousalChange: 0.06
+  SubBothArousalChange: 0.05
   OrgasmThreshold: 0.85
   OrgasmThresholdMultiplier: 0.8
   OrgasmArousalResetTo: 0.25
   OrgasmResistanceDropCoefficient: 1
-  EdgeNeutralIntensity: 0.15
-  EdgeFillRate: 1.6
-  WithholdDuration: 3
+  EdgeNeutralIntensity: 0.18
+  EdgeFillRate: 1.15
+  WithholdDuration: 3.4
   EdgePeakHoldDuration: 1.5
-  EdgeResistanceFactor: 0.65
-  EdgeDriveBoostFactor: 0.5
+  EdgeResistanceFactor: 0.4
+  EdgeDriveBoostFactor: 0.9
   EdgeFillCurve: 0.5
-  EdgeDrainRate: 0.2
+  EdgeDrainRate: 0.24

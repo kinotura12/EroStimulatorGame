@@ -15,8 +15,8 @@
 - [ ] End 条件と主要遷移が破綻していない
 
 ## 進め方
-- [ ] フェーズ1: 現行設定の棚卸しを行う
-- [ ] フェーズ2: 各状態の意味を固定する
+- [x] フェーズ1: 現行設定の棚卸しを行う
+- [x] フェーズ2: 各状態の意味を固定する
 - [ ] フェーズ3: 遷移条件だけを整理する
 - [ ] フェーズ4: 各パラメータの増減係数を調整する
 - [ ] フェーズ5: 実装反映とデバッグ確認を行う
@@ -71,37 +71,143 @@
 ## フェーズ2: 各状態の意味を固定する
 
 ### 2-1. 状態ごとの理想挙動シート
-- [ ] `状態理想挙動入力シート.md` の記入内容を確認する
-- [ ] Guarded
-- [ ] Defensive
-- [ ] Overridden
-- [ ] FrustratedCraving
-- [ ] Acclimating
-- [ ] Surrendered
-- [ ] BrokenDown
+- [x] `状態理想挙動入力シート.md` の記入内容を確認する
+- [x] Guarded
+- [x] Defensive
+- [x] Overridden
+- [x] FrustratedCraving
+- [x] Acclimating
+- [x] Surrendered
+- [x] BrokenDown
 
 ### 2-2. 各状態で明文化する項目
-- [ ] 拒絶 / 受容
-- [ ] Drive の高さ
-- [ ] Arousal の位置づけ
-- [ ] 疲労感
-- [ ] 気持ちいい入力 / 嫌な入力
+- [x] 拒絶 / 受容
+- [x] Drive の高さ
+- [x] Arousal の位置づけ
+- [x] 疲労感
+- [x] 気持ちいい入力 / 嫌な入力
+
+### フェーズ2の固定内容
+
+#### 状態差の核
+- `Guarded / Defensive / Overridden / FrustratedCraving` は高反抗ルートの見どころ
+- `Acclimating / Surrendered` は懐柔・受容ルートの見どころ
+- `BrokenDown` は `Surrendered` の上位ではなく、理性崩壊と Bias 分岐が主役の最終局面
+
+#### 各状態の固定ポイント
+- `Guarded`: 緊張した制御状態。快感は低く、Drive はかなり低い。Defensive か Acclimating への分岐起点
+- `Defensive`: 強い拒絶と苛立ち。Arousal は上がっても受容しない。`Above` で反発、`Below` で欲求不満化
+- `Overridden`: 強い刺激で押し切られる状態。快感より「押し切られ感」を優先
+- `FrustratedCraving`: 拒絶のまま身体だけ求める欲求不満状態。疲労より焦らし蓄積が核
+- `Acclimating`: 快感を認め始める順応状態。Surrendered へ向かう前の駆け引きの主舞台
+- `Surrendered`: 受容完成状態。BrokenDown と違い、まだ理性の残量がある
+- `BrokenDown`: 理性崩壊状態。Bias による質感差とサービスタイム感が重要
+
+#### フェーズ3へ持ち越す重要論点
+- `Guarded -> Defensive` は反発増大の主ルートとして維持したい
+- `Defensive -> Acclimating` は軽すぎると高反抗ルートの見どころを壊す
+- `FrustratedCraving` は `Fatigue高` より `焦らし蓄積 / 欲求不満` を主因にしたい
+- `Acclimating -> Surrendered` はすぐ飛ばず、快感の駆け引きを挟みたい
+- `Surrendered -> BrokenDown` は受容完成後の理性崩壊として見せたい
+- `BrokenDown` は通常状態へ戻さない前提で整理したい
 
 ## フェーズ3: 遷移条件だけを整理する
 
 ### 3-1. 入口条件 / 出口条件の整理
-- [ ] 各状態の入口条件を見直す
-- [ ] 各状態の出口条件を見直す
-- [ ] `Arousal >= x / Drive >= x / Resistance <= x / Band継続y秒` を基準に整理する
-- [ ] この段階では増減係数はまだ触らない
+- [x] 各状態の入口条件を見直す
+- [x] 各状態の出口条件を見直す
+- [x] `Arousal >= x / Drive >= x / Resistance <= x / Band継続y秒` を基準に整理する
+- [x] この段階では増減係数はまだ触らない
 
 ### 3-2. 状態差の重点確認
-- [ ] `Defensive` と `Acclimating` の差を `Resistance` と `Drive` で出せているか確認する
-- [ ] `Surrendered` と `BrokenDown` の差を `Drive / Fatigue / DriveBias` で出せているか確認する
+- [x] `Defensive` と `Acclimating` の差を `Resistance` と `Drive` で出せているか確認する
+- [x] `Surrendered` と `BrokenDown` の差を `Drive / Fatigue / DriveBias` で出せているか確認する
+
+### フェーズ3の確定内容: 遷移条件
+
+#### 基本方針
+- `Arousal` は「遷移タイミングが不自然にならないための補助条件」として使う
+- 状態差の主軸は `Resistance` と `Drive`
+- `FrustratedCraving` は `Fatigue` より `欲求不満 / 焦らし蓄積` を優先
+- `Acclimating -> Surrendered` は OrgasmCount マイルストーンを挟む（OrgasmCount >= 1）
+- `BrokenDown` は通常状態へ戻さない
+- `EdgeDwellTime` は `param: 6`（BrokenDownMode廃止済みによる繰り上げ後の値）
+
+#### ① Guarded
+- `Guarded -> Defensive`
+  - `Resistance >= 0.75`
+- `Guarded -> Acclimating`
+  - `Resistance <= 0.32` AND `Drive >= 0.30` AND `Arousal >= 0.50`
+- `Guarded -> FrustratedCraving`
+  - `Below` 継続 `5s` AND `Drive >= 0.50` AND `EdgeDwellTime >= 6s`
+  - ※「初回除外」条件は実装不可のため閾値で代用
+
+#### ② Defensive
+- `Defensive -> Overridden`（優先）
+  - `Drive >= 0.50` AND `OrgasmCount >= 1` AND `Fatigue >= 0.60`
+- `Defensive -> FrustratedCraving`
+  - `Below` 継続 `4s` AND `Drive >= 0.45` AND `EdgeDwellTime >= 6s`
+- `Defensive -> Acclimating`（重い経路、残す）
+  - `Resistance <= 0.25` AND `Drive >= 0.40` AND `Arousal >= 0.70`
+- `Defensive -> Guarded`（後退、最後に評価）
+  - `Resistance <= 0.55` AND `Drive <= 0.28` AND `Arousal <= 0.35`
+
+#### ③ Overridden
+- `Overridden -> End_A`（優先）
+  - `OrgasmCount >= 3` AND `Fatigue >= 0.90`
+- `Overridden -> FrustratedCraving`
+  - `Below` 継続 `4s` AND `Drive >= 0.50` AND `EdgeDwellTime >= 6s`
+- `Overridden -> Acclimating`
+  - `Resistance <= 0.30` AND `Fatigue <= 0.25` AND `Arousal >= 0.60` AND `Drive >= 0.45`
+- `Overridden -> Defensive`（後退）
+  - `Arousal <= 0.38` AND `Drive <= 0.38` AND `Resistance >= 0.45`
+
+#### ④ FrustratedCraving
+- `FrustratedCraving -> BrokenDown`（優先）
+  - `Drive >= 0.80` AND `OrgasmCount >= 2` AND `Arousal >= 0.60`
+  - ※ Fatigue は必須条件から外す
+- `FrustratedCraving -> Overridden`
+  - `Above` 継続 `4s` AND `Drive >= 0.50` AND `OrgasmCount >= 1` AND `Fatigue >= 0.60`
+- `FrustratedCraving -> Acclimating`
+  - `Resistance <= 0.30` AND `Fatigue <= 0.25` AND `Arousal >= 0.70` AND `Drive >= 0.45`
+- `FrustratedCraving -> Guarded`
+  - なし
+
+#### ⑤ Acclimating
+- `Acclimating -> Surrendered`（優先）
+  - `OrgasmCount >= 1` AND `Resistance <= 0.22`
+- `Acclimating -> FrustratedCraving`
+  - `Below` 継続 `4s` AND `Drive >= 0.50` AND `EdgeDwellTime >= 6s`
+- `Acclimating -> Guarded`（緊急後退、閾値は低め）
+  - `Arousal <= 0.20` AND `Drive <= 0.25`
+- `Acclimating -> BrokenDown`
+  - なし（Surrendered 経由のみ）
+
+#### ⑥ Surrendered
+- `Surrendered -> BrokenDown [トロトロ]`（優先）
+  - `Below` 継続 `3s` AND `Drive >= 0.90` AND `DriveBias < 0` AND `OrgasmCount >= 3`
+- `Surrendered -> BrokenDown [アヘ]`（優先）
+  - `Above` 継続 `3s` AND `Drive >= 0.90` AND `DriveBias >= 0` AND `OrgasmCount >= 3`
+- `Surrendered -> End_B`
+  - `OrgasmCount >= 2` AND `Fatigue >= 0.88`
+- `Surrendered -> Acclimating`（後退）
+  - `Drive <= 0.35`
+- `Surrendered -> Guarded`
+  - なし
+
+#### ⑦ BrokenDown
+- `BrokenDown -> End_C_White`
+  - `OrgasmCount >= 3` AND `Fatigue >= 0.90` AND `DriveBias < 0`
+- `BrokenDown -> End_C_Overload`
+  - `OrgasmCount >= 3` AND `Fatigue >= 0.90` AND `DriveBias >= 0`
+- `BrokenDown -> 他通常状態`
+  - なし
 
 ## フェーズ4: 各パラメータの増減係数を調整する
 
 ### 4-1. パラメータごとの設計順
+- [x] フェーズ4初期数値案を `設計書_状態遷移とパラメータ.md` の「9. フェーズ4 数値設計案」に作成する
+- [x] shared 基準値と状態別 override 方針を分けて整理する
 - [ ] `Drive` と `Resistance` を先に調整する
 - [ ] 次に `Arousal` と `EdgeTension` を調整する
 - [ ] 最後に `Fatigue` を調整する
@@ -158,3 +264,4 @@
 - 2026-03-09: 初期所見として、Drive 系の共通増加量が弱く状態差が出にくい、Fatigue が全体的に軽く End 制御軸として薄い、SubB の役割再確認が必要と判断
 - 2026-03-09: フェーズ2用に `状態理想挙動入力シート.md` を追加。次回以降はこの記入内容を参照して理想挙動シートを確定する
 - 2026-03-09: 現行実装・`docs/sim_visualizations/2026-03-09_状態可視化/state_archetype_affect_grid.html` を参照して、`状態理想挙動入力シート.md` に暫定入力を実施
+- 2026-03-09: フェーズ3確定済みの遷移条件と入力シートを前提に、`設計書_状態遷移とパラメータ.md` にフェーズ4の初期数値案を追記
